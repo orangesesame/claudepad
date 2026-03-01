@@ -25,8 +25,7 @@ pub async fn show_claude_view(
     let webview = WebviewBuilder::new(
         "claude-view",
         WebviewUrl::External("https://claude.ai".parse().unwrap()),
-    )
-    .auto_resize();
+    );
 
     win.add_child(
         webview,
