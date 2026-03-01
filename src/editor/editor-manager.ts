@@ -150,21 +150,52 @@ export class EditorManager {
     return this.editor;
   }
 
-  async renameActiveFile(): Promise<void> {
+  renameActiveFile(tabEl: HTMLElement): void {
     const tab = this.getActiveTab();
     if (!tab || !tab.path) return;
 
-    const oldName = tab.label;
-    const newName = window.prompt("Rename file:", oldName);
-    if (!newName || newName === oldName) return;
+    const labelSpan = tabEl.querySelector(".tab-label") as HTMLElement;
+    if (!labelSpan) return;
 
-    const dir = tab.path.substring(0, tab.path.lastIndexOf("/"));
-    const newPath = dir + "/" + newName;
+    // Replace the label with an inline input
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = tab.label;
+    input.className = "tab-rename-input";
+    input.style.cssText = "background:var(--bg);color:var(--text);border:1px solid var(--accent);font-family:var(--font);font-size:11px;padding:0 4px;width:120px;outline:none;border-radius:2px;";
 
-    await renameFile(tab.path, newPath);
-    tab.path = newPath;
-    tab.label = newName;
-    this.renderTabs();
+    labelSpan.replaceWith(input);
+    input.focus();
+    // Select the name without the extension
+    const dotIdx = input.value.lastIndexOf(".");
+    input.setSelectionRange(0, dotIdx > 0 ? dotIdx : input.value.length);
+
+    const commit = async () => {
+      const newName = input.value.trim();
+      if (newName && newName !== tab.label && tab.path) {
+        const dir = tab.path.substring(0, tab.path.lastIndexOf("/"));
+        const newPath = dir + "/" + newName;
+        try {
+          await renameFile(tab.path, newPath);
+          tab.path = newPath;
+          tab.label = newName;
+        } catch (err) {
+          console.error("Rename failed:", err);
+        }
+      }
+      this.renderTabs();
+    };
+
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      } else if (e.key === "Escape") {
+        input.removeEventListener("blur", commit);
+        this.renderTabs();
+      }
+    });
   }
 
   togglePreview(): void {
@@ -263,7 +294,7 @@ export class EditorManager {
       el.addEventListener("dblclick", (e) => {
         if (!(e.target as HTMLElement).classList.contains("tab-close")) {
           this.activateTab(tab.id);
-          this.renameActiveFile();
+          this.renameActiveFile(el);
         }
       });
       this.tabBar.appendChild(el);

@@ -43,18 +43,53 @@ export class FileExplorer {
     await this.renderTree();
   }
 
-  private async promptNewFile(): Promise<void> {
+  private promptNewFile(): void {
     if (!this.rootPath) return;
 
-    const name = window.prompt("File name:", "untitled.md");
-    if (!name) return;
+    // Insert an inline input row at the top of the tree
+    const row = document.createElement("div");
+    row.className = "tree-row tree-row-file";
+    row.style.paddingLeft = "18px";
 
-    const fileName = name.endsWith(".md") ? name : name + ".md";
-    const filePath = this.rootPath + "/" + fileName;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = "untitled.md";
+    input.style.cssText = "background:var(--bg);color:var(--text);border:1px solid var(--accent);font-family:var(--font);font-size:12px;padding:0 4px;width:calc(100% - 8px);outline:none;border-radius:2px;height:20px;";
+    row.appendChild(input);
 
-    await writeFile(filePath, "");
-    await this.renderTree();
-    this.onFileSelect?.(filePath);
+    this.treeContainer.prepend(row);
+    input.focus();
+    const dotIdx = input.value.lastIndexOf(".");
+    input.setSelectionRange(0, dotIdx > 0 ? dotIdx : input.value.length);
+
+    const commit = async () => {
+      const name = input.value.trim();
+      if (name && this.rootPath) {
+        const fileName = name.endsWith(".md") ? name : name + ".md";
+        const filePath = this.rootPath + "/" + fileName;
+        try {
+          await writeFile(filePath, "");
+          await this.renderTree();
+          this.onFileSelect?.(filePath);
+        } catch (err) {
+          console.error("Failed to create file:", err);
+          row.remove();
+        }
+      } else {
+        row.remove();
+      }
+    };
+
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      } else if (e.key === "Escape") {
+        input.removeEventListener("blur", commit);
+        row.remove();
+      }
+    });
   }
 
   private async renderTree(): Promise<void> {
