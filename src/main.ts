@@ -4,6 +4,7 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
+import { toggleClaudeView, resizeClaudeView, hideClaudeView } from "./commands";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
@@ -31,10 +32,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Initialize splitters
   const explorerSplitter = new Splitter(splitterExplorerEl, explorerPane, editorPane, 140, 200);
-  explorerSplitter.setOnResize(() => terminalManager.fitAll());
+  explorerSplitter.setOnResize(() => { terminalManager.fitAll(); syncClaudePosition(); });
 
   const splitter = new Splitter(splitterEl, editorPane, terminalPane);
-  splitter.setOnResize(() => terminalManager.fitAll());
+  splitter.setOnResize(() => { terminalManager.fitAll(); syncClaudePosition(); });
 
   // Create initial terminal
   await terminalManager.addTerminal();
@@ -48,6 +49,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   document.getElementById("btn-open-folder")!.addEventListener("click", openFolder);
+
+  // Claude Chat toggle
+  let claudeVisible = false;
+  const claudeBtn = document.getElementById("btn-claude")!;
+
+  const getTerminalRect = () => {
+    const rect = terminalPane.getBoundingClientRect();
+    return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+  };
+
+  claudeBtn.addEventListener("click", async () => {
+    const r = getTerminalRect();
+    try {
+      claudeVisible = await toggleClaudeView(r.x, r.y, r.width, r.height);
+      claudeBtn.classList.toggle("active", claudeVisible);
+      terminalPane.style.visibility = claudeVisible ? "hidden" : "";
+    } catch (err) {
+      console.error("Claude view error:", err);
+    }
+  });
+
+  // Keep Claude view positioned over terminal pane on resize/splitter drag
+  const syncClaudePosition = () => {
+    if (!claudeVisible) return;
+    const r = getTerminalRect();
+    resizeClaudeView(r.x, r.y, r.width, r.height).catch(() => {});
+  };
 
   // Toolbar buttons
   document.getElementById("btn-new-term")!.addEventListener("click", () => {
@@ -129,5 +157,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Handle window resize for terminal fitting
   window.addEventListener("resize", () => {
     terminalManager.fitAll();
+    syncClaudePosition();
   });
 });

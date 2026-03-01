@@ -56,3 +56,25 @@ export async function writeFile(
 ): Promise<void> {
   await invoke("write_file", { path, contents });
 }
+
+export async function toggleClaudeView(
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<boolean> {
+  return await invoke("toggle_claude_view", { x, y, width, height });
+}
+
+export async function resizeClaudeView(
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<void> {
+  await invoke("resize_claude_view", { x, y, width, height });
+}
+
+export async function hideClaudeView(): Promise<void> {
+  await invoke("hide_claude_view");
+}

@@ -71,6 +71,12 @@ html, body {
   background: var(--selection);
 }
 
+#toolbar button.active {
+  background: var(--selection);
+  border-color: var(--text);
+  color: var(--text-bold);
+}
+
 /* Main layout */
 #main {
   display: flex;
