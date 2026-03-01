@@ -96,7 +96,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         await copyClaudeToClipboard();
         // Small delay for the eval'd JS to execute and clipboard to update
-        await new Promise((r) => setTimeout(r, 300));
+        // Allow time for Claude's Copy button click to update the clipboard
+        await new Promise((r) => setTimeout(r, 500));
         text = await readClipboard();
       } catch (err) {
         console.error("Failed to copy from Claude:", err);

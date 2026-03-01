@@ -52,15 +52,33 @@ pub async fn hide_claude_view(app: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub async fn copy_claude_to_clipboard(app: tauri::AppHandle) -> Result<(), String> {
     let wv: Webview = app.get_webview("claude-view").ok_or("Claude view not open")?;
-    // Eval JS that finds the last assistant response and copies it to system clipboard
+    // Eval JS that clicks the last Copy button on claude.ai (only assistant messages have them)
     wv.eval(r#"
         (() => {
             try {
-                // Try multiple selectors for claude.ai message content
-                let msgs = document.querySelectorAll('[class*="font-claude-message"]');
-                if (!msgs.length) msgs = document.querySelectorAll('.prose');
-                if (!msgs.length) msgs = document.querySelectorAll('[data-testid*="message"]');
-                if (!msgs.length) msgs = document.querySelectorAll('[class*="message-content"]');
+                // Strategy 1: Click the last "Copy" button — only on Claude's responses
+                const buttons = Array.from(document.querySelectorAll('button'));
+                const copyBtns = buttons.filter(b => {
+                    const text = b.textContent.trim().toLowerCase();
+                    const label = (b.getAttribute('aria-label') || '').toLowerCase();
+                    return text === 'copy' || label === 'copy' || label === 'copy to clipboard'
+                        || label === 'copy response';
+                });
+                if (copyBtns.length) {
+                    copyBtns[copyBtns.length - 1].click();
+                    return;
+                }
+                // Strategy 2: Find assistant messages by role attributes
+                let msgs = document.querySelectorAll(
+                    '[data-role="assistant"], [data-message-author-role="assistant"]'
+                );
+                if (!msgs.length) {
+                    // Strategy 3: Get message-like elements that contain copy buttons
+                    const candidates = document.querySelectorAll('[class*="message"], [class*="response"], [class*="prose"]');
+                    msgs = Array.from(candidates).filter(el =>
+                        el.querySelector('button') && el.innerText.length > 20
+                    );
+                }
                 if (!msgs.length) return;
                 const last = msgs[msgs.length - 1];
                 const text = last.innerText;
