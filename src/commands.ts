@@ -57,24 +57,18 @@ export async function writeFile(
   await invoke("write_file", { path, contents });
 }
 
-export async function showClaudeView(
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): Promise<void> {
-  await invoke("show_claude_view", { x, y, width, height });
+export async function openClaudeWindow(): Promise<void> {
+  await invoke("open_claude_window");
 }
 
-export async function hideClaudeView(): Promise<void> {
-  await invoke("hide_claude_view");
+export async function hideClaudeWindow(): Promise<void> {
+  await invoke("hide_claude_window");
 }
 
-export async function resizeClaudeView(
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): Promise<void> {
-  await invoke("resize_claude_view", { x, y, width, height });
+export async function saveLastFolder(path: string): Promise<void> {
+  await invoke("save_last_folder", { path });
+}
+
+export async function loadLastFolder(): Promise<string | null> {
+  return await invoke("load_last_folder");
 }

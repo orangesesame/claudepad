@@ -4,7 +4,7 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { showClaudeView, hideClaudeView, resizeClaudeView } from "./commands";
+import { openClaudeWindow, hideClaudeWindow, saveLastFolder, loadLastFolder } from "./commands";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
@@ -32,76 +32,75 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Initialize splitters
   const explorerSplitter = new Splitter(splitterExplorerEl, explorerPane, editorPane, 140, 200);
-  explorerSplitter.setOnResize(() => { terminalManager.fitAll(); syncClaudePosition(); });
+  explorerSplitter.setOnResize(() => terminalManager.fitAll());
 
   const splitter = new Splitter(splitterEl, editorPane, terminalPane);
-  splitter.setOnResize(() => { terminalManager.fitAll(); syncClaudePosition(); });
+  splitter.setOnResize(() => terminalManager.fitAll());
 
   // Create initial terminal
   await terminalManager.addTerminal();
 
-  // Open folder handler
+  // Open folder handler — saves to persistent state
   const openFolder = async () => {
     const selected = await open({ directory: true, multiple: false });
     if (selected) {
-      await explorer.openFolder(selected as string);
+      const folder = selected as string;
+      await explorer.openFolder(folder);
+      saveLastFolder(folder).catch(() => {});
     }
   };
 
   document.getElementById("btn-open-folder")!.addEventListener("click", openFolder);
 
-  // Claude Chat toggle
-  let claudeVisible = false;
-  const claudeBtn = document.getElementById("btn-claude")!;
+  // Restore last folder on startup
+  try {
+    const lastFolder = await loadLastFolder();
+    if (lastFolder) {
+      await explorer.openFolder(lastFolder);
+    }
+  } catch {
+    // No saved folder — that's fine
+  }
 
-  const getTerminalRect = () => {
-    const rect = terminalPane.getBoundingClientRect();
-    return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+  // --- Mode buttons: Claude / Terminal / Preview ---
+  const claudeBtn = document.getElementById("btn-claude")!;
+  const terminalBtn = document.getElementById("btn-terminal")!;
+  const previewBtn = document.getElementById("btn-toggle-preview")!;
+
+  const setActiveMode = (btn: HTMLElement) => {
+    claudeBtn.classList.remove("active");
+    terminalBtn.classList.remove("active");
+    btn.classList.add("active");
   };
 
+  // Claude button — opens Claude in a separate window, keeps terminal visible
   claudeBtn.addEventListener("click", async () => {
-    const r = getTerminalRect();
     try {
-      if (claudeVisible) {
-        await hideClaudeView();
-        claudeVisible = false;
-      } else {
-        await showClaudeView(r.x, r.y, r.width, r.height);
-        claudeVisible = true;
-      }
-      claudeBtn.classList.toggle("active", claudeVisible);
-      terminalPane.style.visibility = claudeVisible ? "hidden" : "";
+      await openClaudeWindow();
+      setActiveMode(claudeBtn);
     } catch (err) {
-      console.error("Claude view error:", err);
+      console.error("Claude window error:", err);
     }
   });
 
-  // Keep Claude view positioned over terminal pane on resize/splitter drag
-  const syncClaudePosition = () => {
-    if (!claudeVisible) return;
-    const r = getTerminalRect();
-    resizeClaudeView(r.x, r.y, r.width, r.height).catch(() => {});
-  };
+  // Terminal button — hides Claude window, shows terminal
+  terminalBtn.addEventListener("click", async () => {
+    try {
+      await hideClaudeWindow();
+    } catch { /* may not exist yet */ }
+    setActiveMode(terminalBtn);
+    terminalManager.fitAll();
+  });
+
+  // Preview button — toggles markdown preview (independent of Claude/Terminal)
+  previewBtn.addEventListener("click", () => {
+    editorManager.togglePreview();
+    previewBtn.classList.toggle("active");
+  });
 
   // Toolbar buttons
   document.getElementById("btn-new-term")!.addEventListener("click", () => {
     terminalManager.addTerminal();
-  });
-
-  document.getElementById("btn-open-file")!.addEventListener("click", () => {
-    editorManager.openFile();
-  });
-
-  document.getElementById("btn-new-file")!.addEventListener("click", () => {
-    editorManager.newFile();
-  });
-
-  document.getElementById("btn-save-file")!.addEventListener("click", () => {
-    editorManager.saveFile();
-  });
-
-  document.getElementById("btn-toggle-preview")!.addEventListener("click", () => {
-    editorManager.togglePreview();
   });
 
   // Formatting toolbar buttons
@@ -136,24 +135,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.addEventListener("keydown", (e) => {
     const meta = e.metaKey || e.ctrlKey;
 
-    if (meta && e.key === "n") {
-      e.preventDefault();
-      terminalManager.addTerminal();
-    } else if (meta && e.key === "b") {
+    if (meta && e.key === "b") {
       e.preventDefault();
       editor().wrapSelection("**", "**");
     } else if (meta && e.key === "i") {
       e.preventDefault();
       editor().wrapSelection("*", "*");
-    } else if (meta && e.key === "o") {
-      e.preventDefault();
-      editorManager.openFile();
     } else if (meta && e.key === "s") {
       e.preventDefault();
       editorManager.saveFile();
     } else if (meta && e.key === "p") {
       e.preventDefault();
       editorManager.togglePreview();
+      previewBtn.classList.toggle("active");
     } else if (meta && e.key >= "1" && e.key <= "9") {
       e.preventDefault();
       terminalManager.activateByIndex(parseInt(e.key) - 1);
@@ -163,6 +157,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Handle window resize for terminal fitting
   window.addEventListener("resize", () => {
     terminalManager.fitAll();
-    syncClaudePosition();
   });
 });

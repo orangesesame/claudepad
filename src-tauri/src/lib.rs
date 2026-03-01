@@ -23,9 +23,10 @@ pub fn run() {
             files::write_file,
             files::rename_file,
             files::read_dir,
-            claude_view::show_claude_view,
-            claude_view::hide_claude_view,
-            claude_view::resize_claude_view,
+            files::save_last_folder,
+            files::load_last_folder,
+            claude_view::open_claude_window,
+            claude_view::hide_claude_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ClaudePad");
