@@ -70,6 +70,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     editorManager.togglePreview();
   });
 
+  // Formatting toolbar buttons
+  const editor = () => editorManager.getEditor();
+
+  document.getElementById("fmt-bold")!.addEventListener("click", () => {
+    editor().wrapSelection("**", "**");
+  });
+  document.getElementById("fmt-italic")!.addEventListener("click", () => {
+    editor().wrapSelection("*", "*");
+  });
+  document.getElementById("fmt-underline")!.addEventListener("click", () => {
+    editor().wrapSelection("<u>", "</u>");
+  });
+  document.getElementById("fmt-h1")!.addEventListener("click", () => {
+    editor().prefixLines("# ");
+  });
+  document.getElementById("fmt-h2")!.addEventListener("click", () => {
+    editor().prefixLines("## ");
+  });
+  document.getElementById("fmt-h3")!.addEventListener("click", () => {
+    editor().prefixLines("### ");
+  });
+  document.getElementById("fmt-ul")!.addEventListener("click", () => {
+    editor().prefixLines("- ");
+  });
+  document.getElementById("fmt-ol")!.addEventListener("click", () => {
+    editor().numberedList();
+  });
+
   // Global keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     const meta = e.metaKey || e.ctrlKey;
@@ -77,6 +105,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (meta && e.key === "n") {
       e.preventDefault();
       terminalManager.addTerminal();
+    } else if (meta && e.key === "b") {
+      e.preventDefault();
+      editor().wrapSelection("**", "**");
+    } else if (meta && e.key === "i") {
+      e.preventDefault();
+      editor().wrapSelection("*", "*");
     } else if (meta && e.key === "o") {
       e.preventDefault();
       editorManager.openFile();

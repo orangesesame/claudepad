@@ -19,6 +19,12 @@ pub fn write_file(path: String, contents: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn rename_file(old_path: String, new_path: String) -> Result<(), String> {
+    fs::rename(&old_path, &new_path)
+        .map_err(|e| format!("Failed to rename '{}' to '{}': {}", old_path, new_path, e))
+}
+
+#[tauri::command]
 pub fn read_dir(path: String) -> Result<Vec<DirEntry>, String> {
     let mut entries: Vec<DirEntry> = fs::read_dir(&path)
         .map_err(|e| format!("Failed to read dir '{}': {}", path, e))?

@@ -42,6 +42,10 @@ export async function readDir(path: string): Promise<DirEntry[]> {
   return await invoke("read_dir", { path });
 }
 
+export async function renameFile(oldPath: string, newPath: string): Promise<void> {
+  await invoke("rename_file", { oldPath, newPath });
+}
+
 export async function readFile(path: string): Promise<string> {
   return await invoke("read_file", { path });
 }

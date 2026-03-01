@@ -1,6 +1,6 @@
 import { MarkdownEditor } from "./markdown-editor";
 import { MarkdownPreview } from "./markdown-preview";
-import { readFile, writeFile } from "../commands";
+import { readFile, writeFile, renameFile } from "../commands";
 import { open, save } from "@tauri-apps/plugin-dialog";
 
 interface EditorTab {
@@ -146,6 +146,27 @@ export class EditorManager {
     this.renderTabs();
   }
 
+  getEditor(): MarkdownEditor {
+    return this.editor;
+  }
+
+  async renameActiveFile(): Promise<void> {
+    const tab = this.getActiveTab();
+    if (!tab || !tab.path) return;
+
+    const oldName = tab.label;
+    const newName = window.prompt("Rename file:", oldName);
+    if (!newName || newName === oldName) return;
+
+    const dir = tab.path.substring(0, tab.path.lastIndexOf("/"));
+    const newPath = dir + "/" + newName;
+
+    await renameFile(tab.path, newPath);
+    tab.path = newPath;
+    tab.label = newName;
+    this.renderTabs();
+  }
+
   togglePreview(): void {
     this.previewVisible = !this.previewVisible;
 
@@ -232,6 +253,12 @@ export class EditorManager {
           this.closeTab(tab.id);
         } else {
           this.activateTab(tab.id);
+        }
+      });
+      el.addEventListener("dblclick", (e) => {
+        if (!(e.target as HTMLElement).classList.contains("tab-close")) {
+          this.activateTab(tab.id);
+          this.renameActiveFile();
         }
       });
       this.tabBar.appendChild(el);

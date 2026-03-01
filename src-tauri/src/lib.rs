@@ -20,6 +20,7 @@ pub fn run() {
             pty::kill_pty,
             files::read_file,
             files::write_file,
+            files::rename_file,
             files::read_dir,
         ])
         .run(tauri::generate_context!())

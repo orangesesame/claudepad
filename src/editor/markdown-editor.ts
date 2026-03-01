@@ -166,6 +166,54 @@ export class MarkdownEditor {
     this.onChangeCallback = callback;
   }
 
+  /** Wrap selection with before/after markers (e.g. **bold**) */
+  wrapSelection(before: string, after: string): void {
+    if (!this.view) return;
+    const { from, to } = this.view.state.selection.main;
+    const selected = this.view.state.sliceDoc(from, to);
+    this.view.dispatch({
+      changes: { from, to, insert: before + selected + after },
+      selection: { anchor: from + before.length, head: to + before.length },
+    });
+    this.view.focus();
+  }
+
+  /** Prefix each selected line (or current line) with a string */
+  prefixLines(prefix: string): void {
+    if (!this.view) return;
+    const state = this.view.state;
+    const { from, to } = state.selection.main;
+    const startLine = state.doc.lineAt(from).number;
+    const endLine = state.doc.lineAt(to).number;
+
+    const changes: { from: number; to: number; insert: string }[] = [];
+    for (let i = startLine; i <= endLine; i++) {
+      const line = state.doc.line(i);
+      changes.push({ from: line.from, to: line.from, insert: prefix });
+    }
+    this.view.dispatch({ changes });
+    this.view.focus();
+  }
+
+  /** Prefix lines with numbered list (1. 2. 3.) */
+  numberedList(): void {
+    if (!this.view) return;
+    const state = this.view.state;
+    const { from, to } = state.selection.main;
+    const startLine = state.doc.lineAt(from).number;
+    const endLine = state.doc.lineAt(to).number;
+
+    const changes: { from: number; to: number; insert: string }[] = [];
+    let num = 1;
+    for (let i = startLine; i <= endLine; i++) {
+      const line = state.doc.line(i);
+      changes.push({ from: line.from, to: line.from, insert: `${num}. ` });
+      num++;
+    }
+    this.view.dispatch({ changes });
+    this.view.focus();
+  }
+
   focus(): void {
     this.view?.focus();
   }
