@@ -11,30 +11,30 @@ import { tags } from "@lezer/highlight";
 const clearDarkTheme = EditorView.theme(
   {
     "&": {
-      color: "#e0e0e0",
+      color: "#00FF00",
       backgroundColor: "#000000",
       fontFamily: '"SFMono-Regular", "SF Mono", "Menlo", "Consolas", monospace',
       fontSize: "12px",
     },
     ".cm-content": {
-      caretColor: "#e0e0e0",
+      caretColor: "#00FF00",
     },
     ".cm-cursor, .cm-dropCursor": {
-      borderLeftColor: "#e0e0e0",
+      borderLeftColor: "#00FF00",
     },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
       {
-        backgroundColor: "#3b3b3b",
+        backgroundColor: "#005500",
       },
     ".cm-panels": {
       backgroundColor: "#0a0a0a",
-      color: "#e0e0e0",
+      color: "#00FF00",
     },
     ".cm-panels.cm-panels-top": {
-      borderBottom: "1px solid #1a1a1a",
+      borderBottom: "1px solid #00AA00",
     },
     ".cm-panels.cm-panels-bottom": {
-      borderTop: "1px solid #1a1a1a",
+      borderTop: "1px solid #00AA00",
     },
     ".cm-searchMatch": {
       backgroundColor: "#72a1ff59",
@@ -47,28 +47,28 @@ const clearDarkTheme = EditorView.theme(
       backgroundColor: "#0a0a0a",
     },
     ".cm-selectionMatch": {
-      backgroundColor: "#aafe661a",
+      backgroundColor: "#004400",
     },
     "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
-      backgroundColor: "#bad0f847",
+      backgroundColor: "#005500",
     },
     ".cm-gutters": {
       backgroundColor: "#000000",
-      color: "#444",
+      color: "#005500",
       border: "none",
-      borderRight: "1px solid #1a1a1a",
+      borderRight: "1px solid #00AA00",
     },
     ".cm-activeLineGutter": {
       backgroundColor: "#0a0a0a",
-      color: "#666",
+      color: "#00AA00",
     },
     ".cm-foldPlaceholder": {
       backgroundColor: "transparent",
       border: "none",
-      color: "#666",
+      color: "#007700",
     },
     ".cm-tooltip": {
-      border: "1px solid #1a1a1a",
+      border: "1px solid #00AA00",
       backgroundColor: "#0a0a0a",
     },
     ".cm-tooltip .cm-tooltip-arrow:before": {
@@ -81,8 +81,8 @@ const clearDarkTheme = EditorView.theme(
     },
     ".cm-tooltip-autocomplete": {
       "& > ul > li[aria-selected]": {
-        backgroundColor: "#3b3b3b",
-        color: "#e0e0e0",
+        backgroundColor: "#005500",
+        color: "#00FF00",
       },
     },
   },
@@ -90,22 +90,22 @@ const clearDarkTheme = EditorView.theme(
 );
 
 const clearDarkHighlighting = HighlightStyle.define([
-  { tag: tags.keyword, color: "#c792ea" },
-  { tag: [tags.name, tags.deleted, tags.character, tags.propertyName, tags.macroName], color: "#e0e0e0" },
-  { tag: [tags.function(tags.variableName), tags.labelName], color: "#82aaff" },
-  { tag: [tags.color, tags.constant(tags.name), tags.standard(tags.name)], color: "#f78c6c" },
-  { tag: [tags.definition(tags.name), tags.separator], color: "#e0e0e0" },
-  { tag: [tags.typeName, tags.className, tags.number, tags.changed, tags.annotation, tags.modifier, tags.self, tags.namespace], color: "#ffcb6b" },
-  { tag: [tags.operator, tags.operatorKeyword, tags.url, tags.escape, tags.regexp, tags.link, tags.special(tags.string)], color: "#89ddff" },
-  { tag: [tags.meta, tags.comment], color: "#666666" },
-  { tag: tags.strong, fontWeight: "bold", color: "#ededed" },
-  { tag: tags.emphasis, fontStyle: "italic", color: "#c3e88d" },
+  { tag: tags.keyword, color: "#33FF33" },
+  { tag: [tags.name, tags.deleted, tags.character, tags.propertyName, tags.macroName], color: "#00FF00" },
+  { tag: [tags.function(tags.variableName), tags.labelName], color: "#66FF66" },
+  { tag: [tags.color, tags.constant(tags.name), tags.standard(tags.name)], color: "#00CC00" },
+  { tag: [tags.definition(tags.name), tags.separator], color: "#00FF00" },
+  { tag: [tags.typeName, tags.className, tags.number, tags.changed, tags.annotation, tags.modifier, tags.self, tags.namespace], color: "#99FF99" },
+  { tag: [tags.operator, tags.operatorKeyword, tags.url, tags.escape, tags.regexp, tags.link, tags.special(tags.string)], color: "#33FF33" },
+  { tag: [tags.meta, tags.comment], color: "#005500" },
+  { tag: tags.strong, fontWeight: "bold", color: "#33FF33" },
+  { tag: tags.emphasis, fontStyle: "italic", color: "#66FF66" },
   { tag: tags.strikethrough, textDecoration: "line-through" },
-  { tag: tags.link, color: "#00a6b2", textDecoration: "underline" },
-  { tag: tags.heading, fontWeight: "bold", color: "#ededed" },
-  { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#f78c6c" },
-  { tag: [tags.processingInstruction, tags.string, tags.inserted], color: "#c3e88d" },
-  { tag: tags.invalid, color: "#ff5370" },
+  { tag: tags.link, color: "#33FF33", textDecoration: "underline" },
+  { tag: tags.heading, fontWeight: "bold", color: "#33FF33" },
+  { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#00CC00" },
+  { tag: [tags.processingInstruction, tags.string, tags.inserted], color: "#66FF66" },
+  { tag: tags.invalid, color: "#FF0000" },
 ]);
 
 export class MarkdownEditor {

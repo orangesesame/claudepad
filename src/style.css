@@ -2,13 +2,13 @@
 
 :root {
   --bg: #000000;
-  --text: #e0e0e0;
-  --text-bold: #ededed;
-  --selection: #3b3b3b;
-  --border: #1a1a1a;
+  --text: #00FF00;
+  --text-bold: #33FF33;
+  --selection: #005500;
+  --border: #00AA00;
   --surface: #0a0a0a;
-  --surface-hover: #141414;
-  --accent: #00a6b2;
+  --surface-hover: #0d1a0d;
+  --accent: #00FF00;
   --font: "SFMono-Regular", "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
   --font-size: 12px;
   --toolbar-height: 32px;
@@ -153,7 +153,7 @@ html, body {
 #preview-container blockquote {
   border-left: 3px solid var(--selection);
   padding-left: 12px;
-  color: #999;
+  color: #00AA00;
   margin: 0.5em 0;
 }
 
@@ -170,14 +170,14 @@ html, body {
 
 /* Splitter */
 #splitter {
-  width: 4px;
+  width: 2px;
   cursor: col-resize;
   background: var(--border);
   flex-shrink: 0;
 }
 
 #splitter:hover {
-  background: var(--accent);
+  background: var(--text-bold);
 }
 
 /* Terminal pane */
@@ -215,7 +215,7 @@ html, body {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 3px;
-  color: #888;
+  color: #007700;
   font-family: var(--font);
   font-size: 11px;
   cursor: pointer;
@@ -231,7 +231,7 @@ html, body {
 .tab.active {
   background: var(--selection);
   color: var(--text-bold);
-  border-color: var(--border);
+  border-color: var(--text);
 }
 
 .tab .tab-close {
@@ -272,12 +272,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--selection);
+  background: #005500;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #007700;
 }
 
 /* Placeholder states */
@@ -286,6 +286,6 @@ html, body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #444;
+  color: #005500;
   font-size: 13px;
 }
