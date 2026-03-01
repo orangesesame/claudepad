@@ -4,7 +4,7 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { saveLastFolder, loadLastFolder } from "./commands";
+import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard } from "./commands";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
@@ -87,6 +87,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   previewBtn.addEventListener("click", () => {
     editorManager.togglePreview();
     previewBtn.classList.toggle("active");
+  });
+
+  // Copy to .md — grabs output from active terminal or Claude and inserts at cursor
+  document.getElementById("btn-copy-to-md")!.addEventListener("click", async () => {
+    let text = "";
+    if (terminalManager.isClaudeActive()) {
+      try {
+        await copyClaudeToClipboard();
+        // Small delay for the eval'd JS to execute and clipboard to update
+        await new Promise((r) => setTimeout(r, 300));
+        text = await readClipboard();
+      } catch (err) {
+        console.error("Failed to copy from Claude:", err);
+      }
+    } else {
+      text = terminalManager.getTerminalOutput();
+    }
+    if (text) {
+      editorManager.getEditor().insertAtCursor(text);
+    }
   });
 
   // Toolbar buttons

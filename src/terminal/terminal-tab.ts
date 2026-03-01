@@ -114,6 +114,19 @@ export class TerminalTab {
     }
   }
 
+  getVisibleContent(): string {
+    const sel = this.terminal.getSelection();
+    if (sel) return sel;
+    // Fall back to visible buffer lines
+    const buf = this.terminal.buffer.active;
+    const lines: string[] = [];
+    for (let i = buf.viewportY; i < buf.viewportY + this.terminal.rows; i++) {
+      const line = buf.getLine(i);
+      if (line) lines.push(line.translateToString(true));
+    }
+    return lines.join("\n").trimEnd();
+  }
+
   focus(): void {
     this.terminal.focus();
   }

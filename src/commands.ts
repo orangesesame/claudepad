@@ -70,6 +70,14 @@ export async function hideClaudeView(): Promise<void> {
   await invoke("hide_claude_view");
 }
 
+export async function copyClaudeToClipboard(): Promise<void> {
+  await invoke("copy_claude_to_clipboard");
+}
+
+export async function readClipboard(): Promise<string> {
+  return await invoke("read_clipboard");
+}
+
 export async function saveLastFolder(path: string): Promise<void> {
   await invoke("save_last_folder", { path });
 }

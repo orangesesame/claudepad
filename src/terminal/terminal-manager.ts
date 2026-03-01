@@ -188,6 +188,14 @@ export class TerminalManager {
     return this.activeTab;
   }
 
+  isClaudeActive(): boolean {
+    return this.claudeId !== null && this.activeId === this.claudeId;
+  }
+
+  getTerminalOutput(): string {
+    return this.activeTab?.getVisibleContent() ?? "";
+  }
+
   fitAll(): void {
     if (this.activeId === this.claudeId) {
       this.positionClaudeView();

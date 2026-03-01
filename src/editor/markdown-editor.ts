@@ -214,6 +214,16 @@ export class MarkdownEditor {
     this.view.focus();
   }
 
+  insertAtCursor(text: string): void {
+    if (!this.view) return;
+    const cursor = this.view.state.selection.main.head;
+    this.view.dispatch({
+      changes: { from: cursor, insert: text },
+      selection: { anchor: cursor + text.length },
+    });
+    this.view.focus();
+  }
+
   focus(): void {
     this.view?.focus();
   }
