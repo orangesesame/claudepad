@@ -102,6 +102,7 @@ html, body {
 .explorer-header {
   display: flex;
   align-items: center;
+  gap: 4px;
   padding: 4px 8px;
   height: var(--tab-height);
   background: var(--surface);
@@ -131,50 +132,50 @@ html, body {
   padding: 4px 0;
 }
 
-.tree-item {
+.tree-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
+  height: 24px;
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
 }
 
-.tree-item > .tree-arrow {
+.tree-row:hover {
+  background: var(--surface-hover);
+}
+
+.tree-row-active {
+  background: var(--selection) !important;
+}
+
+.tree-row .tree-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 16px;
-  height: 22px;
   font-size: 8px;
   color: #007700;
   flex-shrink: 0;
 }
 
-.tree-item > .tree-label {
+.tree-row .tree-label {
   flex: 1;
-  padding: 2px 8px 2px 0;
+  padding: 0 8px 0 2px;
   font-size: 12px;
-  line-height: 18px;
+  line-height: 24px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text);
 }
 
-.tree-file > .tree-label:hover {
+.tree-row-folder .tree-label {
   color: var(--text-bold);
-  background: var(--surface-hover);
 }
 
-.tree-folder > .tree-label {
-  color: var(--text-bold);
-  font-weight: bold;
-}
-
-.tree-children {
-  width: 100%;
-  padding-left: 12px;
+.tree-row-file .tree-label {
+  color: var(--text);
 }
 
 .tree-error {
