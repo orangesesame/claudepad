@@ -1,13 +1,17 @@
 import "@xterm/xterm/css/xterm.css";
 import { TerminalManager } from "./terminal/terminal-manager";
 import { EditorManager } from "./editor/editor-manager";
+import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
+import { open } from "@tauri-apps/plugin-dialog";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
   // Get DOM elements
+  const explorerPane = document.getElementById("explorer-pane")!;
   const editorPane = document.getElementById("editor-pane")!;
   const terminalPane = document.getElementById("terminal-pane")!;
+  const splitterExplorerEl = document.getElementById("splitter-explorer")!;
   const splitterEl = document.getElementById("splitter")!;
   const terminalTabs = document.getElementById("terminal-tabs")!;
   const terminalContainer = document.getElementById("terminal-container")!;
@@ -18,13 +22,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Initialize managers
   const terminalManager = new TerminalManager(terminalTabs, terminalContainer);
   const editorManager = new EditorManager(editorTabs, editorContainer, previewContainer);
+  const explorer = new FileExplorer(explorerPane);
 
-  // Initialize splitter
+  // Wire explorer file selection to editor
+  explorer.setOnFileSelect((path) => {
+    editorManager.openFileByPath(path);
+  });
+
+  // Initialize splitters
+  const explorerSplitter = new Splitter(splitterExplorerEl, explorerPane, editorPane, 140, 200);
+  explorerSplitter.setOnResize(() => terminalManager.fitAll());
+
   const splitter = new Splitter(splitterEl, editorPane, terminalPane);
   splitter.setOnResize(() => terminalManager.fitAll());
 
   // Create initial terminal
   await terminalManager.addTerminal();
+
+  // Open folder handler
+  const openFolder = async () => {
+    const selected = await open({ directory: true, multiple: false });
+    if (selected) {
+      await explorer.openFolder(selected as string);
+    }
+  };
+
+  document.getElementById("btn-open-folder")!.addEventListener("click", openFolder);
 
   // Toolbar buttons
   document.getElementById("btn-new-term")!.addEventListener("click", () => {

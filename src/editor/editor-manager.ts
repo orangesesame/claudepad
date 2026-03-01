@@ -22,6 +22,7 @@ export class EditorManager {
   private editorContainer: HTMLElement;
   private previewContainer: HTMLElement;
   private previewVisible = false;
+  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     tabBar: HTMLElement,
@@ -66,6 +67,24 @@ export class EditorManager {
 
     const path = selected as string;
 
+    // Check if already open
+    const existing = this.tabs.find((t) => t.path === path);
+    if (existing) {
+      this.activateTab(existing.id);
+      return;
+    }
+
+    const content = await readFile(path);
+    const id = `file-${++tabCounter}`;
+    const label = path.split("/").pop() || "file";
+
+    const tab: EditorTab = { id, label, path, content, modified: false };
+    this.tabs.push(tab);
+    this.renderTabs();
+    this.activateTab(id);
+  }
+
+  async openFileByPath(path: string): Promise<void> {
     // Check if already open
     const existing = this.tabs.find((t) => t.path === path);
     if (existing) {
@@ -171,6 +190,7 @@ export class EditorManager {
       if (this.previewVisible) {
         this.preview.render(content);
       }
+      this.scheduleAutoSave(tab);
     });
 
     if (this.previewVisible) {
@@ -179,6 +199,18 @@ export class EditorManager {
 
     this.renderTabs();
     this.editor.focus();
+  }
+
+  private scheduleAutoSave(tab: EditorTab): void {
+    if (!tab.path) return;
+    if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
+    this.autoSaveTimer = setTimeout(async () => {
+      if (tab.path && tab.modified) {
+        await writeFile(tab.path, tab.content);
+        tab.modified = false;
+        this.renderTabs();
+      }
+    }, 1000);
   }
 
   private getActiveTab(): EditorTab | null {

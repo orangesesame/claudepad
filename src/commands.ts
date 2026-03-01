@@ -32,6 +32,16 @@ export async function killPty(id: string): Promise<void> {
   await invoke("kill_pty", { id });
 }
 
+export interface DirEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+}
+
+export async function readDir(path: string): Promise<DirEntry[]> {
+  return await invoke("read_dir", { path });
+}
+
 export async function readFile(path: string): Promise<string> {
   return await invoke("read_file", { path });
 }

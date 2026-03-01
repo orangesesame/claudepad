@@ -4,15 +4,21 @@ export class Splitter {
   private rightPane: HTMLElement;
   private dragging = false;
   private onResize: (() => void) | null = null;
+  private minLeft: number;
+  private minRight: number;
 
   constructor(
     splitterEl: HTMLElement,
     leftPane: HTMLElement,
-    rightPane: HTMLElement
+    rightPane: HTMLElement,
+    minLeft = 200,
+    minRight = 200
   ) {
     this.splitterEl = splitterEl;
     this.leftPane = leftPane;
     this.rightPane = rightPane;
+    this.minLeft = minLeft;
+    this.minRight = minRight;
     this.init();
   }
 
@@ -27,16 +33,14 @@ export class Splitter {
     document.addEventListener("mousemove", (e) => {
       if (!this.dragging) return;
 
-      const container = this.splitterEl.parentElement!;
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const totalWidth = rect.width;
-      const splitterWidth = this.splitterEl.offsetWidth;
+      const leftRect = this.leftPane.getBoundingClientRect();
+      const x = e.clientX - leftRect.left;
 
-      // Clamp between 200px and totalWidth - 200px
-      const minLeft = 200;
-      const maxLeft = totalWidth - 200 - splitterWidth;
-      const leftWidth = Math.max(minLeft, Math.min(maxLeft, x));
+      // Clamp: left pane can't go below minLeft, right pane keeps minRight
+      const rightRect = this.rightPane.getBoundingClientRect();
+      const available = leftRect.width + rightRect.width;
+      const maxLeft = available - this.minRight;
+      const leftWidth = Math.max(this.minLeft, Math.min(maxLeft, x));
 
       this.leftPane.style.width = `${leftWidth}px`;
       this.leftPane.style.flex = "none";
