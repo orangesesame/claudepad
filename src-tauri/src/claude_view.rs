@@ -1,73 +1,63 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{LogicalPosition, LogicalSize, Manager, WebviewUrl};
 
-static CLAUDE_VIEW_EXISTS: AtomicBool = AtomicBool::new(false);
+static CLAUDE_VIEW_CREATED: AtomicBool = AtomicBool::new(false);
+static CLAUDE_VIEW_VISIBLE: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
-pub async fn toggle_claude_view(
+pub async fn show_claude_view(
     app: tauri::AppHandle,
     x: f64,
     y: f64,
     width: f64,
     height: f64,
-) -> Result<bool, String> {
-    // If the webview already exists, toggle its visibility
-    if let Some(webview) = app.webview_windows().get("claude-chat") {
-        let visible = webview.is_visible().unwrap_or(false);
-        if visible {
-            webview.hide().map_err(|e| e.to_string())?;
-            Ok(false)
-        } else {
-            webview.show().map_err(|e| e.to_string())?;
-            webview.set_focus().map_err(|e| e.to_string())?;
-            Ok(true)
-        }
-    } else if CLAUDE_VIEW_EXISTS.load(Ordering::Relaxed) {
-        // Child webview (not a window) — look for it on the main window
-        let window = app
-            .get_window("main")
-            .ok_or("Main window not found")?;
+) -> Result<(), String> {
+    let window = app.get_window("main").ok_or("Main window not found")?;
 
+    if CLAUDE_VIEW_CREATED.load(Ordering::Relaxed) {
+        // Already created — move it back on-screen
         if let Some(wv) = window.get_webview("claude-chat") {
-            // Reposition and show
             wv.set_position(LogicalPosition::new(x, y))
                 .map_err(|e| e.to_string())?;
             wv.set_size(LogicalSize::new(width, height))
                 .map_err(|e| e.to_string())?;
-            Ok(true)
-        } else {
-            CLAUDE_VIEW_EXISTS.store(false, Ordering::Relaxed);
-            create_child_webview(&app, x, y, width, height)
         }
     } else {
-        create_child_webview(&app, x, y, width, height)
+        // Create it for the first time
+        let url = "https://claude.ai".parse().unwrap();
+        let builder =
+            tauri::webview::WebviewBuilder::new("claude-chat", WebviewUrl::External(url));
+
+        window
+            .add_child(
+                builder,
+                LogicalPosition::new(x, y),
+                LogicalSize::new(width, height),
+            )
+            .map_err(|e| e.to_string())?;
+
+        CLAUDE_VIEW_CREATED.store(true, Ordering::Relaxed);
     }
+
+    CLAUDE_VIEW_VISIBLE.store(true, Ordering::Relaxed);
+    Ok(())
 }
 
-fn create_child_webview(
-    app: &tauri::AppHandle,
-    x: f64,
-    y: f64,
-    width: f64,
-    height: f64,
-) -> Result<bool, String> {
-    let window = app
-        .get_window("main")
-        .ok_or("Main window not found")?;
-
-    let url = "https://claude.ai".parse().unwrap();
-    let builder = tauri::webview::WebviewBuilder::new("claude-chat", WebviewUrl::External(url));
-
-    window
-        .add_child(
-            builder,
-            LogicalPosition::new(x, y),
-            LogicalSize::new(width, height),
-        )
-        .map_err(|e| e.to_string())?;
-
-    CLAUDE_VIEW_EXISTS.store(true, Ordering::Relaxed);
-    Ok(true)
+#[tauri::command]
+pub async fn hide_claude_view(app: tauri::AppHandle) -> Result<(), String> {
+    if !CLAUDE_VIEW_CREATED.load(Ordering::Relaxed) {
+        return Ok(());
+    }
+    let window = app.get_window("main").ok_or("Main window not found")?;
+    if let Some(wv) = window.get_webview("claude-chat") {
+        // Move off-screen and shrink to 0 to fully hide
+        wv.set_position(LogicalPosition::new(-9999.0, -9999.0))
+            .map_err(|e| e.to_string())?;
+        wv.set_size(LogicalSize::new(1.0, 1.0))
+            .map_err(|e| e.to_string())?;
+    }
+    CLAUDE_VIEW_VISIBLE.store(false, Ordering::Relaxed);
+    Ok(())
 }
 
 #[tauri::command]
@@ -78,22 +68,14 @@ pub async fn resize_claude_view(
     width: f64,
     height: f64,
 ) -> Result<(), String> {
+    if !CLAUDE_VIEW_VISIBLE.load(Ordering::Relaxed) {
+        return Ok(());
+    }
     let window = app.get_window("main").ok_or("Main window not found")?;
     if let Some(wv) = window.get_webview("claude-chat") {
         wv.set_position(LogicalPosition::new(x, y))
             .map_err(|e| e.to_string())?;
         wv.set_size(LogicalSize::new(width, height))
-            .map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn hide_claude_view(app: tauri::AppHandle) -> Result<(), String> {
-    let window = app.get_window("main").ok_or("Main window not found")?;
-    if let Some(wv) = window.get_webview("claude-chat") {
-        // Move off-screen to hide (child webviews don't have show/hide)
-        wv.set_position(LogicalPosition::new(-9999.0, -9999.0))
             .map_err(|e| e.to_string())?;
     }
     Ok(())

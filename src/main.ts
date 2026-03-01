@@ -4,7 +4,7 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { toggleClaudeView, resizeClaudeView, hideClaudeView } from "./commands";
+import { showClaudeView, hideClaudeView, resizeClaudeView } from "./commands";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
@@ -62,7 +62,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   claudeBtn.addEventListener("click", async () => {
     const r = getTerminalRect();
     try {
-      claudeVisible = await toggleClaudeView(r.x, r.y, r.width, r.height);
+      if (claudeVisible) {
+        await hideClaudeView();
+        claudeVisible = false;
+      } else {
+        await showClaudeView(r.x, r.y, r.width, r.height);
+        claudeVisible = true;
+      }
       claudeBtn.classList.toggle("active", claudeVisible);
       terminalPane.style.visibility = claudeVisible ? "hidden" : "";
     } catch (err) {
