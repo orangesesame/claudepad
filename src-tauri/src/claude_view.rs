@@ -1,32 +1,51 @@
-use tauri::Manager;
+use tauri::{Manager, WebviewBuilder, WebviewUrl};
+use tauri::LogicalPosition;
+use tauri::LogicalSize;
 
 #[tauri::command]
-pub async fn open_claude_window(app: tauri::AppHandle) -> Result<(), String> {
-    // If already exists, just show and focus
-    if let Some(win) = app.get_webview_window("claude-chat") {
-        win.show().map_err(|e| e.to_string())?;
-        win.set_focus().map_err(|e| e.to_string())?;
+pub async fn show_claude_view(
+    app: tauri::AppHandle,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    if let Some(wv) = app.get_webview("claude-view") {
+        // Already exists — move into position
+        wv.set_position(LogicalPosition::new(x, y))
+            .map_err(|e| e.to_string())?;
+        wv.set_size(LogicalSize::new(width, height))
+            .map_err(|e| e.to_string())?;
         return Ok(());
     }
 
-    // Create a new WebviewWindow
-    tauri::WebviewWindowBuilder::new(
-        &app,
-        "claude-chat",
-        tauri::WebviewUrl::External("https://claude.ai".parse().unwrap()),
+    // Create child webview on the main window
+    let win = app.get_window("main").ok_or("no main window")?;
+
+    let webview = WebviewBuilder::new(
+        "claude-view",
+        WebviewUrl::External("https://claude.ai".parse().unwrap()),
     )
-    .title("Claude Chat")
-    .inner_size(900.0, 700.0)
-    .build()
+    .auto_resize();
+
+    win.add_child(
+        webview,
+        LogicalPosition::new(x, y),
+        LogicalSize::new(width, height),
+    )
     .map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub async fn hide_claude_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(win) = app.get_webview_window("claude-chat") {
-        win.hide().map_err(|e| e.to_string())?;
+pub async fn hide_claude_view(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(wv) = app.get_webview("claude-view") {
+        // Move off-screen and shrink
+        wv.set_position(LogicalPosition::new(-9999.0_f64, -9999.0_f64))
+            .map_err(|e| e.to_string())?;
+        wv.set_size(LogicalSize::new(1.0_f64, 1.0_f64))
+            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }
