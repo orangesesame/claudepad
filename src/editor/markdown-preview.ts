@@ -77,7 +77,7 @@ export class MarkdownPreview {
         continue;
       }
 
-      // Unordered list
+      // Unordered list (including checkboxes)
       const ulMatch = line.match(/^\s*[-*+]\s+(.+)/);
       if (ulMatch) {
         if (!inList || listType !== "ul") {
@@ -86,7 +86,15 @@ export class MarkdownPreview {
           inList = true;
           listType = "ul";
         }
-        html.push(`<li>${this.inlineFormat(ulMatch[1])}</li>`);
+        let content = ulMatch[1];
+        // Checkbox: - [ ] or - [x] / - [X]
+        const cbMatch = content.match(/^\[([ xX])\]\s*(.*)/);
+        if (cbMatch) {
+          const checked = cbMatch[1] !== " " ? " checked" : "";
+          html.push(`<li style="list-style:none;margin-left:-20px"><input type="checkbox" disabled${checked}> ${this.inlineFormat(cbMatch[2])}</li>`);
+        } else {
+          html.push(`<li>${this.inlineFormat(content)}</li>`);
+        }
         continue;
       }
 

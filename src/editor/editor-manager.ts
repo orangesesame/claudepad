@@ -170,17 +170,22 @@ export class EditorManager {
   togglePreview(): void {
     this.previewVisible = !this.previewVisible;
 
+    const formatToolbar = document.getElementById("format-toolbar");
+
     if (this.previewVisible) {
+      // Hide editor, show preview in same space
+      this.editorContainer.style.display = "none";
+      if (formatToolbar) formatToolbar.style.display = "none";
       this.previewContainer.classList.remove("hidden");
-      this.editorContainer.style.flex = "1";
-      this.previewContainer.style.flex = "1";
       const tab = this.getActiveTab();
       if (tab) {
         this.preview.render(tab.content);
       }
     } else {
+      // Hide preview, show editor
       this.previewContainer.classList.add("hidden");
-      this.editorContainer.style.flex = "";
+      this.editorContainer.style.display = "";
+      if (formatToolbar) formatToolbar.style.display = "";
     }
   }
 
