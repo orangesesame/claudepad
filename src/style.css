@@ -256,13 +256,32 @@ html, body {
 /* Preview container */
 #preview-container {
   flex: 1;
-  overflow: auto;
-  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 24px;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: var(--font-size);
   line-height: 1.6;
+}
+
+#preview-container p,
+#preview-container h1,
+#preview-container h2,
+#preview-container h3,
+#preview-container h4,
+#preview-container blockquote,
+#preview-container pre,
+#preview-container hr {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#preview-container ul,
+#preview-container ol {
+  padding-left: 24px;
+  margin-left: 0;
 }
 
 #preview-container.hidden {
