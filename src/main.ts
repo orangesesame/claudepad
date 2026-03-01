@@ -4,7 +4,7 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { openClaudeWindow, hideClaudeWindow, saveLastFolder, loadLastFolder } from "./commands";
+import { saveLastFolder, loadLastFolder } from "./commands";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
@@ -73,23 +73,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     btn.classList.add("active");
   };
 
-  // Claude button — opens Claude in a separate window, keeps terminal visible
-  claudeBtn.addEventListener("click", async () => {
-    try {
-      await openClaudeWindow();
-      setActiveMode(claudeBtn);
-    } catch (err) {
-      console.error("Claude window error:", err);
-    }
+  // Claude button — opens Claude as a tab in the terminal pane
+  claudeBtn.addEventListener("click", () => {
+    terminalManager.addClaudeTab();
   });
 
-  // Terminal button — hides Claude window, shows terminal
-  terminalBtn.addEventListener("click", async () => {
-    try {
-      await hideClaudeWindow();
-    } catch { /* may not exist yet */ }
-    setActiveMode(terminalBtn);
-    terminalManager.fitAll();
+  // Terminal button — activates the first terminal tab
+  terminalBtn.addEventListener("click", () => {
+    terminalManager.activateByIndex(0);
   });
 
   // Preview button — toggles markdown preview (independent of Claude/Terminal)
