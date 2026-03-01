@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClaudePad</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="toolbar">
+      <div id="toolbar-left">
+        <button id="btn-open-file" title="Open File (Cmd+O)">Open</button>
+        <button id="btn-new-file" title="New File">New</button>
+        <button id="btn-save-file" title="Save File (Cmd+S)">Save</button>
+        <button id="btn-toggle-preview" title="Toggle Preview (Cmd+P)">Preview</button>
+      </div>
+      <div id="toolbar-right">
+        <button id="btn-new-term" title="New Terminal (Cmd+N)">+ Term</button>
+      </div>
+    </div>
+    <div id="main">
+      <div id="editor-pane">
+        <div id="editor-container"></div>
+        <div id="preview-container" class="hidden"></div>
+        <div id="editor-tabs"></div>
+      </div>
+      <div id="splitter"></div>
+      <div id="terminal-pane">
+        <div id="terminal-tabs"></div>
+        <div id="terminal-container"></div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
