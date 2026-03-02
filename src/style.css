@@ -657,3 +657,15 @@ html, body {
 .search-text {
   color: var(--text);
 }
+
+/* Version label */
+#version-label {
+  position: fixed;
+  bottom: 4px;
+  right: 8px;
+  font-family: var(--font);
+  font-size: 10px;
+  color: #005500;
+  pointer-events: none;
+  z-index: 10;
+}
