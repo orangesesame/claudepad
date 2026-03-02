@@ -14,6 +14,7 @@ export class FileExplorer {
   private onFileSelect: ((path: string) => void) | null = null;
   private bookmarks: Bookmark[] = [];
   private bookmarkList: HTMLElement;
+  private focusedRow: HTMLElement | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -50,6 +51,10 @@ export class FileExplorer {
     this.container.appendChild(this.treeContainer);
 
     this.treeContainer.innerHTML = '<div class="empty-state">No folder open</div>';
+    this.treeContainer.tabIndex = 0;
+
+    // Keyboard navigation
+    this.treeContainer.addEventListener("keydown", (e) => this.handleKeyboard(e));
 
     // New .md button handler
     header.querySelector("#btn-new-md")!.addEventListener("click", () => {
@@ -186,6 +191,8 @@ export class FileExplorer {
     const row = document.createElement("div");
     row.className = "tree-row tree-row-folder";
     row.style.paddingLeft = `${depth * 14 + 4}px`;
+    row.dataset.path = dirPath;
+    row.dataset.type = "folder";
     row.innerHTML = `<span class="tree-arrow">${isExpanded ? "&#9660;" : "&#9654;"}</span><span class="tree-label">${label}</span>`;
     parent.appendChild(row);
 
@@ -195,6 +202,7 @@ export class FileExplorer {
     parent.appendChild(childrenEl);
 
     row.addEventListener("click", async () => {
+      this.setFocusedRow(row);
       if (this.expandedDirs.has(dirPath)) {
         this.expandedDirs.delete(dirPath);
         childrenEl.style.display = "none";
@@ -222,15 +230,14 @@ export class FileExplorer {
           await this.buildFolder(entry.path, container, depth);
         } else {
           const row = document.createElement("div");
-          row.className = "tree-row tree-row-file";
+          const isMd = entry.name.endsWith(".md") || entry.name.endsWith(".markdown");
+          row.className = `tree-row tree-row-file${isMd ? "" : " tree-row-dimmed"}`;
           row.style.paddingLeft = `${depth * 14 + 4}px`;
+          row.dataset.path = entry.path;
           row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label">${entry.name}</span>`;
 
           row.addEventListener("click", () => {
-            this.treeContainer.querySelectorAll(".tree-row-active").forEach((el) => {
-              el.classList.remove("tree-row-active");
-            });
-            row.classList.add("tree-row-active");
+            this.setFocusedRow(row);
             this.onFileSelect?.(entry.path);
           });
 
@@ -242,6 +249,57 @@ export class FileExplorer {
       errEl.className = "tree-error";
       errEl.textContent = "Error loading";
       container.appendChild(errEl);
+    }
+  }
+
+  private getVisibleRows(): HTMLElement[] {
+    return Array.from(this.treeContainer.querySelectorAll(".tree-row")) as HTMLElement[];
+  }
+
+  private setFocusedRow(row: HTMLElement): void {
+    this.treeContainer.querySelectorAll(".tree-row-active").forEach((el) => {
+      el.classList.remove("tree-row-active");
+    });
+    row.classList.add("tree-row-active");
+    this.focusedRow = row;
+    row.scrollIntoView({ block: "nearest" });
+  }
+
+  private async handleKeyboard(e: KeyboardEvent): Promise<void> {
+    const rows = this.getVisibleRows();
+    if (rows.length === 0) return;
+
+    const currentIdx = this.focusedRow ? rows.indexOf(this.focusedRow) : -1;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIdx = currentIdx < rows.length - 1 ? currentIdx + 1 : 0;
+      this.setFocusedRow(rows[nextIdx]);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIdx = currentIdx > 0 ? currentIdx - 1 : rows.length - 1;
+      this.setFocusedRow(rows[prevIdx]);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      if (this.focusedRow?.dataset.type === "folder") {
+        const dirPath = this.focusedRow.dataset.path!;
+        if (!this.expandedDirs.has(dirPath)) {
+          this.focusedRow.click();
+        }
+      }
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      if (this.focusedRow?.dataset.type === "folder") {
+        const dirPath = this.focusedRow.dataset.path!;
+        if (this.expandedDirs.has(dirPath)) {
+          this.focusedRow.click();
+        }
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (this.focusedRow) {
+        this.focusedRow.click();
+      }
     }
   }
 }
