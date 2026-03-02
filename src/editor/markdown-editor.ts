@@ -123,6 +123,16 @@ export class MarkdownEditor {
       }
     });
 
+    const toggleCheckboxKeymap = keymap.of([
+      {
+        key: "Mod-Enter",
+        run: (view) => {
+          this.toggleCheckboxAtCursor();
+          return true;
+        },
+      },
+    ]);
+
     const extensions: Extension[] = [
       lineNumbers(),
       highlightActiveLineGutter(),
@@ -137,6 +147,7 @@ export class MarkdownEditor {
       syntaxHighlighting(clearDarkHighlighting),
       syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
+      toggleCheckboxKeymap,
       updateListener,
       EditorView.lineWrapping,
     ];
@@ -212,6 +223,40 @@ export class MarkdownEditor {
     }
     this.view.dispatch({ changes });
     this.view.focus();
+  }
+
+  toggleCheckboxAtCursor(): void {
+    if (!this.view) return;
+    const state = this.view.state;
+    const pos = state.selection.main.head;
+    const line = state.doc.lineAt(pos);
+    const text = line.text;
+    if (text.match(/^(\s*)- \[ \] /)) {
+      this.view.dispatch({
+        changes: { from: line.from, to: line.to, insert: text.replace("- [ ] ", "- [x] ") },
+      });
+    } else if (text.match(/^(\s*)- \[x\] /i)) {
+      this.view.dispatch({
+        changes: { from: line.from, to: line.to, insert: text.replace(/- \[[xX]\] /, "- [ ] ") },
+      });
+    }
+  }
+
+  toggleCheckboxAtLine(lineNumber: number): void {
+    if (!this.view) return;
+    const state = this.view.state;
+    if (lineNumber < 1 || lineNumber > state.doc.lines) return;
+    const line = state.doc.line(lineNumber);
+    const text = line.text;
+    if (text.match(/^(\s*)- \[ \] /)) {
+      this.view.dispatch({
+        changes: { from: line.from, to: line.to, insert: text.replace("- [ ] ", "- [x] ") },
+      });
+    } else if (text.match(/^(\s*)- \[x\] /i)) {
+      this.view.dispatch({
+        changes: { from: line.from, to: line.to, insert: text.replace(/- \[[xX]\] /, "- [ ] ") },
+      });
+    }
   }
 
   insertAtCursor(text: string): void {

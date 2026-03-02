@@ -105,6 +105,94 @@ html, body {
   background: var(--text-bold);
 }
 
+/* Bookmark section */
+.bookmark-section {
+  border-bottom: 1px solid var(--border);
+}
+
+.bookmark-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  height: var(--tab-height);
+  background: var(--surface);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.bookmark-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #007700;
+}
+
+.bookmark-header button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 0 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.bookmark-header button:hover {
+  background: var(--surface-hover);
+}
+
+.bookmark-list {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.bookmark-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 22px;
+  padding: 0 8px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  font-size: 11px;
+  color: var(--text);
+}
+
+.bookmark-row:hover {
+  background: var(--surface-hover);
+}
+
+.bookmark-row.bookmark-active {
+  background: var(--selection);
+  color: var(--text-bold);
+}
+
+.bookmark-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-remove {
+  opacity: 0;
+  font-size: 12px;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.bookmark-row:hover .bookmark-remove {
+  opacity: 0.6;
+}
+
+.bookmark-remove:hover {
+  opacity: 1 !important;
+}
+
 .explorer-header {
   display: flex;
   align-items: center;
@@ -197,6 +285,35 @@ html, body {
   flex: 1;
   min-width: 200px;
   overflow: hidden;
+}
+
+/* Editor header (task buttons) */
+#editor-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  height: var(--tab-height);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#editor-header button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+#editor-header button:hover {
+  background: var(--surface-hover);
 }
 
 /* Formatting toolbar */
@@ -461,4 +578,75 @@ html, body {
   height: 100%;
   color: #005500;
   font-size: 13px;
+}
+
+/* Quick Open / Global Search overlay */
+.quick-open-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  padding-top: 80px;
+  z-index: 1000;
+}
+
+.quick-open-overlay.hidden {
+  display: none;
+}
+
+.quick-open-panel {
+  width: 500px;
+  max-height: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-open-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+}
+
+.quick-open-results {
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.quick-open-row {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-open-row:hover,
+.quick-open-row.selected {
+  background: var(--selection);
+  color: var(--text-bold);
+}
+
+.search-file {
+  color: #007700;
+  margin-right: 8px;
+}
+
+.search-text {
+  color: var(--text);
 }

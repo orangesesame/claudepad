@@ -3,13 +3,27 @@
 
 export class MarkdownPreview {
   private container: HTMLElement;
+  private onCheckboxToggle: ((lineNumber: number) => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
   }
 
+  setOnCheckboxToggle(callback: (lineNumber: number) => void): void {
+    this.onCheckboxToggle = callback;
+  }
+
   render(markdown: string): void {
     this.container.innerHTML = this.toHtml(markdown);
+    // Wire up checkbox click handlers
+    this.container.querySelectorAll<HTMLInputElement>("input[type=checkbox][data-line]").forEach((cb) => {
+      cb.addEventListener("click", () => {
+        const line = parseInt(cb.dataset.line!, 10);
+        if (!isNaN(line) && this.onCheckboxToggle) {
+          this.onCheckboxToggle(line);
+        }
+      });
+    });
   }
 
   private toHtml(md: string): string {
@@ -22,6 +36,7 @@ export class MarkdownPreview {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      const lineNum = i + 1; // 1-based line number for source
 
       // Code blocks
       if (line.startsWith("```")) {
@@ -91,7 +106,7 @@ export class MarkdownPreview {
         const cbMatch = content.match(/^\[([ xX])\]\s*(.*)/);
         if (cbMatch) {
           const checked = cbMatch[1] !== " " ? " checked" : "";
-          html.push(`<li style="list-style:none;margin-left:-20px"><input type="checkbox" disabled${checked}> ${this.inlineFormat(cbMatch[2])}</li>`);
+          html.push(`<li style="list-style:none;margin-left:-20px"><input type="checkbox" data-line="${lineNum}"${checked}> ${this.inlineFormat(cbMatch[2])}</li>`);
         } else {
           html.push(`<li>${this.inlineFormat(content)}</li>`);
         }

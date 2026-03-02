@@ -4,7 +4,9 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard } from "./commands";
+import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard, collectTasks, writeFile, TaskFile } from "./commands";
+import { QuickOpen } from "./quick-open";
+import { GlobalSearch } from "./search/global-search";
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", async () => {
@@ -27,6 +29,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Wire explorer file selection to editor
   explorer.setOnFileSelect((path) => {
+    editorManager.openFileByPath(path);
+  });
+
+  // Quick Open (Cmd+Shift+P)
+  const quickOpen = new QuickOpen();
+  quickOpen.setOnSelect((path) => {
+    editorManager.openFileByPath(path);
+  });
+
+  // Global Search (Cmd+Shift+F)
+  const globalSearch = new GlobalSearch();
+  globalSearch.setOnSelect((path) => {
     editorManager.openFileByPath(path);
   });
 
@@ -110,6 +124,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // --- Task aggregation buttons ---
+  const TASKS_OUTPUT_DIR =
+    "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda/0.Daily Notes";
+
+  const formatTasksMarkdown = (
+    title: string,
+    files: TaskFile[],
+  ): string => {
+    let md = `# ${title}\n`;
+    for (const file of files) {
+      md += `\n## ${file.filename}\n`;
+      let lastHeading: string | null = null;
+      for (const task of file.tasks) {
+        if (task.heading !== lastHeading) {
+          if (task.heading) {
+            md += `\n### ${task.heading}\n`;
+          }
+          lastHeading = task.heading;
+        }
+        md += `- [ ] ${task.text}\n`;
+      }
+    }
+    return md;
+  };
+
+  document.getElementById("btn-all-tasks")!.addEventListener("click", async () => {
+    const dir = explorer.getRootPath();
+    if (!dir) return;
+    try {
+      const files = await collectTasks(dir);
+      // Sort by filename ascending
+      files.sort((a, b) => a.filename.localeCompare(b.filename));
+      const md = formatTasksMarkdown("All Tasks", files);
+      const outPath = `${TASKS_OUTPUT_DIR}/All Tasks.md`;
+      await writeFile(outPath, md);
+      editorManager.openFileByPath(outPath);
+    } catch (err) {
+      console.error("Failed to collect all tasks:", err);
+    }
+  });
+
+  document.getElementById("btn-daily-tasks")!.addEventListener("click", async () => {
+    const dir = explorer.getRootPath();
+    if (!dir) return;
+    try {
+      const files = await collectTasks(dir, "^\\d{4}\\.\\d{2}\\.\\d{2}");
+      // Sort by filename descending (reverse)
+      files.sort((a, b) => b.filename.localeCompare(a.filename));
+      const md = formatTasksMarkdown("Daily Tasks", files);
+      const outPath = `${TASKS_OUTPUT_DIR}/Daily Tasks.md`;
+      await writeFile(outPath, md);
+      editorManager.openFileByPath(outPath);
+    } catch (err) {
+      console.error("Failed to collect daily tasks:", err);
+    }
+  });
+
   // Toolbar buttons
   document.getElementById("btn-new-term")!.addEventListener("click", () => {
     terminalManager.addTerminal();
@@ -156,6 +227,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (meta && e.key === "s") {
       e.preventDefault();
       editorManager.saveFile();
+    } else if (meta && e.shiftKey && (e.key === "p" || e.key === "P")) {
+      e.preventDefault();
+      const dir = explorer.getRootPath();
+      if (dir) quickOpen.show(dir);
+    } else if (meta && e.shiftKey && (e.key === "f" || e.key === "F")) {
+      e.preventDefault();
+      const dir = explorer.getRootPath();
+      if (dir) globalSearch.show(dir);
     } else if (meta && e.key === "p") {
       e.preventDefault();
       editorManager.togglePreview();

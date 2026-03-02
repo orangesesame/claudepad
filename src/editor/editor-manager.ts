@@ -36,6 +36,18 @@ export class EditorManager {
     this.editor = new MarkdownEditor();
     this.preview = new MarkdownPreview(previewContainer);
 
+    // Wire preview checkbox toggles back to editor source
+    this.preview.setOnCheckboxToggle((lineNumber) => {
+      this.editor.toggleCheckboxAtLine(lineNumber);
+      // Update tab content and re-render preview
+      const tab = this.getActiveTab();
+      if (tab) {
+        tab.content = this.editor.getContent();
+        this.preview.render(tab.content);
+        this.scheduleAutoSave(tab);
+      }
+    });
+
     // Show empty state initially
     this.editorContainer.innerHTML = '<div class="empty-state">Open a file (Cmd+O) or create new (Cmd+N)</div>';
   }

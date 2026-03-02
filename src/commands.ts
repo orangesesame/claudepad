@@ -85,3 +85,61 @@ export async function saveLastFolder(path: string): Promise<void> {
 export async function loadLastFolder(): Promise<string | null> {
   return await invoke("load_last_folder");
 }
+
+export interface Bookmark {
+  name: string;
+  path: string;
+}
+
+export async function saveBookmarks(bookmarks: Bookmark[]): Promise<void> {
+  await invoke("save_bookmarks", { bookmarks });
+}
+
+export async function loadBookmarks(): Promise<Bookmark[]> {
+  return await invoke("load_bookmarks");
+}
+
+export interface TaskItem {
+  text: string;
+  heading: string | null;
+}
+
+export interface TaskFile {
+  filename: string;
+  path: string;
+  tasks: TaskItem[];
+}
+
+export async function collectTasks(
+  dir: string,
+  filenameRegex?: string
+): Promise<TaskFile[]> {
+  return await invoke("collect_tasks", {
+    dir,
+    filenameRegex: filenameRegex ?? null,
+  });
+}
+
+export interface FileEntry {
+  name: string;
+  path: string;
+  relative: string;
+}
+
+export async function listMdFiles(dir: string): Promise<FileEntry[]> {
+  return await invoke("list_md_files", { dir });
+}
+
+export interface SearchResult {
+  path: string;
+  relative: string;
+  line_number: number;
+  line_text: string;
+}
+
+export async function searchMdFiles(
+  dir: string,
+  query: string
+): Promise<SearchResult[]> {
+  return await invoke("search_md_files", { dir, query });
+}

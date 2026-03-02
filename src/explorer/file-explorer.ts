@@ -1,4 +1,10 @@
-import { readDir, DirEntry, writeFile } from "../commands";
+import { readDir, DirEntry, writeFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder } from "../commands";
+
+const DEFAULT_BOOKMARKS: Bookmark[] = [
+  { name: "Norda", path: "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda" },
+  { name: "OpenClaw", path: "/Users/philroberts/.openclaw/workspace" },
+  { name: "ClaudePad", path: "/Users/philroberts/claudepad" },
+];
 
 export class FileExplorer {
   private container: HTMLElement;
@@ -6,9 +12,28 @@ export class FileExplorer {
   private rootPath: string | null = null;
   private expandedDirs: Set<string> = new Set();
   private onFileSelect: ((path: string) => void) | null = null;
+  private bookmarks: Bookmark[] = [];
+  private bookmarkList: HTMLElement;
 
   constructor(container: HTMLElement) {
     this.container = container;
+
+    // Bookmarks section
+    const bookmarkSection = document.createElement("div");
+    bookmarkSection.className = "bookmark-section";
+    bookmarkSection.innerHTML = `<div class="bookmark-header">
+      <span class="bookmark-title">Workspaces</span>
+      <button id="btn-add-bookmark" title="Bookmark current folder">+</button>
+    </div>`;
+    this.container.appendChild(bookmarkSection);
+
+    this.bookmarkList = document.createElement("div");
+    this.bookmarkList.className = "bookmark-list";
+    bookmarkSection.appendChild(this.bookmarkList);
+
+    bookmarkSection.querySelector("#btn-add-bookmark")!.addEventListener("click", () => {
+      this.addCurrentAsBookmark();
+    });
 
     // Header with buttons
     const header = document.createElement("div");
@@ -30,6 +55,13 @@ export class FileExplorer {
     header.querySelector("#btn-new-md")!.addEventListener("click", () => {
       this.promptNewFile();
     });
+
+    // Load bookmarks
+    this.loadBookmarks();
+  }
+
+  getRootPath(): string | null {
+    return this.rootPath;
   }
 
   setOnFileSelect(callback: (path: string) => void): void {
@@ -40,13 +72,71 @@ export class FileExplorer {
     this.rootPath = path;
     this.expandedDirs.clear();
     this.expandedDirs.add(path);
+    // Auto-expand first level of subfolders
+    try {
+      const entries = await readDir(path);
+      for (const entry of entries) {
+        if (entry.is_dir) {
+          this.expandedDirs.add(entry.path);
+        }
+      }
+    } catch { /* ignore */ }
     await this.renderTree();
+    this.renderBookmarks();
+  }
+
+  private async loadBookmarks(): Promise<void> {
+    try {
+      this.bookmarks = await loadBookmarks();
+      if (this.bookmarks.length === 0) {
+        this.bookmarks = [...DEFAULT_BOOKMARKS];
+        await saveBookmarks(this.bookmarks);
+      }
+    } catch {
+      this.bookmarks = [...DEFAULT_BOOKMARKS];
+    }
+    this.renderBookmarks();
+  }
+
+  private renderBookmarks(): void {
+    this.bookmarkList.innerHTML = "";
+    for (const bm of this.bookmarks) {
+      const row = document.createElement("div");
+      row.className = "bookmark-row";
+      if (this.rootPath === bm.path) {
+        row.classList.add("bookmark-active");
+      }
+      row.innerHTML = `<span class="bookmark-name">${bm.name}</span><span class="bookmark-remove" title="Remove bookmark">&times;</span>`;
+
+      row.querySelector(".bookmark-name")!.addEventListener("click", () => {
+        this.openFolder(bm.path);
+        saveLastFolder(bm.path).catch(() => {});
+      });
+
+      row.querySelector(".bookmark-remove")!.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.bookmarks = this.bookmarks.filter((b) => b.path !== bm.path);
+        saveBookmarks(this.bookmarks).catch(() => {});
+        this.renderBookmarks();
+      });
+
+      this.bookmarkList.appendChild(row);
+    }
+  }
+
+  private async addCurrentAsBookmark(): Promise<void> {
+    if (!this.rootPath) return;
+    // Don't add if already bookmarked
+    if (this.bookmarks.some((b) => b.path === this.rootPath)) return;
+    const name = this.rootPath.split("/").pop() || this.rootPath;
+    this.bookmarks.push({ name, path: this.rootPath });
+    await saveBookmarks(this.bookmarks);
+    this.renderBookmarks();
   }
 
   private promptNewFile(): void {
     if (!this.rootPath) return;
 
-    // Insert an inline input row at the top of the tree
     const row = document.createElement("div");
     row.className = "tree-row tree-row-file";
     row.style.paddingLeft = "18px";
@@ -102,20 +192,17 @@ export class FileExplorer {
     const isExpanded = this.expandedDirs.has(dirPath);
     const label = dirPath.split("/").pop() || dirPath;
 
-    // Folder row
     const row = document.createElement("div");
     row.className = "tree-row tree-row-folder";
     row.style.paddingLeft = `${depth * 14 + 4}px`;
     row.innerHTML = `<span class="tree-arrow">${isExpanded ? "&#9660;" : "&#9654;"}</span><span class="tree-label">${label}</span>`;
     parent.appendChild(row);
 
-    // Children container
     const childrenEl = document.createElement("div");
     childrenEl.className = "tree-children";
     if (!isExpanded) childrenEl.style.display = "none";
     parent.appendChild(childrenEl);
 
-    // Click to expand/collapse
     row.addEventListener("click", async () => {
       if (this.expandedDirs.has(dirPath)) {
         this.expandedDirs.delete(dirPath);
@@ -130,7 +217,6 @@ export class FileExplorer {
       }
     });
 
-    // Load children if expanded
     if (isExpanded) {
       await this.loadChildren(dirPath, childrenEl, depth + 1);
     }
@@ -150,7 +236,6 @@ export class FileExplorer {
           row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label">${entry.name}</span>`;
 
           row.addEventListener("click", () => {
-            // Remove active class from all rows
             this.treeContainer.querySelectorAll(".tree-row-active").forEach((el) => {
               el.classList.remove("tree-row-active");
             });
