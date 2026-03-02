@@ -72,15 +72,6 @@ export class FileExplorer {
     this.rootPath = path;
     this.expandedDirs.clear();
     this.expandedDirs.add(path);
-    // Auto-expand first level of subfolders
-    try {
-      const entries = await readDir(path);
-      for (const entry of entries) {
-        if (entry.is_dir) {
-          this.expandedDirs.add(entry.path);
-        }
-      }
-    } catch { /* ignore */ }
     await this.renderTree();
     this.renderBookmarks();
   }

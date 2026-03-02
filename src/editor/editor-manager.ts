@@ -21,7 +21,7 @@ export class EditorManager {
   private tabBar: HTMLElement;
   private editorContainer: HTMLElement;
   private previewContainer: HTMLElement;
-  private previewVisible = false;
+  private previewVisible = true;
   private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -48,8 +48,12 @@ export class EditorManager {
       }
     });
 
-    // Show empty state initially
-    this.editorContainer.innerHTML = '<div class="empty-state">Open a file (Cmd+O) or create new (Cmd+N)</div>';
+    // Start in preview mode by default
+    this.editorContainer.style.display = "none";
+    const formatToolbar = document.getElementById("format-toolbar");
+    if (formatToolbar) formatToolbar.style.display = "none";
+    this.previewContainer.classList.remove("hidden");
+    this.previewContainer.innerHTML = '<div class="empty-state">Open a file (Cmd+O) or create new (Cmd+N)</div>';
   }
 
   newFile(): void {

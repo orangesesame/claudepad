@@ -287,17 +287,24 @@ html, body {
   overflow: hidden;
 }
 
-/* Editor header (task buttons) */
+/* Editor header (task buttons + preview toggle) */
 #editor-header {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
   padding: 4px 8px;
   height: var(--tab-height);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   -webkit-user-select: none;
   user-select: none;
+}
+
+#editor-header-left,
+#editor-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 #editor-header button {
