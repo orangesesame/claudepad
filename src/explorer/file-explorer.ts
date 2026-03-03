@@ -1,4 +1,4 @@
-import { readDir, DirEntry, readFile, writeFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder } from "../commands";
+import { readDir, DirEntry, readFile, writeFile, renameFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder } from "../commands";
 
 const DEFAULT_BOOKMARKS: Bookmark[] = [
   { name: "Norda", path: "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda" },
@@ -17,6 +17,7 @@ export class FileExplorer {
   private bookmarkList: HTMLElement;
   private focusedRow: HTMLElement | null = null;
   private clickTimer: ReturnType<typeof setTimeout> | null = null;
+  private dragSourcePath: string | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -215,7 +216,7 @@ export class FileExplorer {
       }
 
       if (!exists) {
-        const template = "# " + dateStr + "\n\n### Priorities for Today\n\n---\n\n- [ ]\n\n<br />\n\n### Stuff I Worked on Today\n\n---\n\n1.\n\n<br />\n\n#### Captured Actions\n\n---\n\n- [ ]\n\n<br />\n\n#### General Notes\n\n---\n\n1.\n";
+        const template = "# " + dateStr + "\n\n### Priorities for Today\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Stuff I Worked on Today\n\n***\n\n1.  \n\n<br />\n\n#### Captured Actions\n\n***\n\n* [ ] <br />\n\n<br />\n\n#### General Notes\n\n***\n\n1. <br />\n";
         await writeFile(filePath, template);
       }
 
@@ -251,6 +252,36 @@ export class FileExplorer {
     if (!isExpanded) childrenEl.style.display = "none";
     parent.appendChild(childrenEl);
 
+    // Drop target: allow files to be dropped onto folders
+    row.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      row.classList.add("drag-over");
+    });
+    row.addEventListener("dragleave", (e) => {
+      // Only remove highlight when actually leaving the row, not entering a child
+      const related = e.relatedTarget as Node | null;
+      if (!related || !row.contains(related)) {
+        row.classList.remove("drag-over");
+      }
+    });
+    row.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      row.classList.remove("drag-over");
+      const srcPath = this.dragSourcePath;
+      if (!srcPath) return;
+      const fileName = srcPath.split("/").pop()!;
+      const destPath = dirPath + "/" + fileName;
+      if (srcPath === destPath) return;
+      try {
+        await renameFile(srcPath, destPath);
+        await this.renderTree();
+      } catch (err) {
+        console.error("Failed to move file:", err);
+      }
+    });
+
     row.addEventListener("click", async () => {
       this.setFocusedRow(row);
       if (this.expandedDirs.has(dirPath)) {
@@ -285,6 +316,18 @@ export class FileExplorer {
           row.style.paddingLeft = `${depth * 14 + 4}px`;
           row.dataset.path = entry.path;
           row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label">${entry.name}</span>`;
+
+          // Drag source: allow files to be dragged
+          row.draggable = true;
+          row.addEventListener("dragstart", (e) => {
+            this.dragSourcePath = entry.path;
+            e.dataTransfer!.effectAllowed = "move";
+            row.classList.add("dragging");
+          });
+          row.addEventListener("dragend", () => {
+            row.classList.remove("dragging");
+            this.dragSourcePath = null;
+          });
 
           row.addEventListener("click", () => {
             this.setFocusedRow(row);

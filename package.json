@@ -1,10 +1,11 @@
 {
   "name": "claudepad",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "./scripts/bump-version.sh minor",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",

@@ -277,6 +277,16 @@ html, body {
   color: #004400;
 }
 
+.tree-row.dragging {
+  opacity: 0.4;
+}
+
+.tree-row-folder.drag-over {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+  background: var(--surface-hover);
+}
+
 .tree-error {
   padding: 4px 16px;
   color: #550000;
