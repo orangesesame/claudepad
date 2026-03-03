@@ -146,6 +146,21 @@ export class FileExplorer {
   private promptNewFile(): void {
     if (!this.rootPath) return;
 
+    // Determine target folder from focused row
+    let targetDir = this.rootPath;
+    let insertAfterEl: HTMLElement | null = null;
+    if (this.focusedRow) {
+      if (this.focusedRow.dataset.type === "folder") {
+        targetDir = this.focusedRow.dataset.path!;
+        // Insert after the folder row's children container
+        insertAfterEl = this.focusedRow.nextElementSibling as HTMLElement | null;
+      } else if (this.focusedRow.dataset.path) {
+        // File row — use its parent folder
+        targetDir = this.focusedRow.dataset.path.substring(0, this.focusedRow.dataset.path.lastIndexOf("/"));
+        insertAfterEl = this.focusedRow;
+      }
+    }
+
     const row = document.createElement("div");
     row.className = "tree-row tree-row-file";
     row.style.paddingLeft = "18px";
@@ -156,16 +171,20 @@ export class FileExplorer {
     input.style.cssText = "background:var(--bg);color:var(--text);border:1px solid var(--accent);font-family:var(--font);font-size:12px;padding:0 4px;width:calc(100% - 8px);outline:none;border-radius:2px;height:20px;";
     row.appendChild(input);
 
-    this.treeContainer.prepend(row);
+    if (insertAfterEl && insertAfterEl.parentElement) {
+      insertAfterEl.parentElement.insertBefore(row, insertAfterEl.nextSibling);
+    } else {
+      this.treeContainer.prepend(row);
+    }
     input.focus();
     const dotIdx = input.value.lastIndexOf(".");
     input.setSelectionRange(0, dotIdx > 0 ? dotIdx : input.value.length);
 
     const commit = async () => {
       const name = input.value.trim();
-      if (name && this.rootPath) {
+      if (name && targetDir) {
         const fileName = name.endsWith(".md") ? name : name + ".md";
-        const filePath = this.rootPath + "/" + fileName;
+        const filePath = targetDir + "/" + fileName;
         try {
           await writeFile(filePath, "");
           await this.renderTree();
