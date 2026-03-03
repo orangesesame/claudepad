@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
+import { readFileSync } from "fs";
 
 const host = process.env.TAURI_DEV_HOST;
+const pkg = JSON.parse(readFileSync("package.json", "utf-8"));
 
 export default defineConfig({
   clearScreen: false,
@@ -11,6 +13,9 @@ export default defineConfig({
     hmr: host
       ? { protocol: "ws", host, port: 1421 }
       : undefined,
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   envPrefix: ["VITE_", "TAURI_"],
   build: {

@@ -1,4 +1,4 @@
-import { readDir, DirEntry, writeFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder } from "../commands";
+import { readDir, DirEntry, readFile, writeFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder } from "../commands";
 
 const DEFAULT_BOOKMARKS: Bookmark[] = [
   { name: "Norda", path: "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda" },
@@ -12,9 +12,11 @@ export class FileExplorer {
   private rootPath: string | null = null;
   private expandedDirs: Set<string> = new Set();
   private onFileSelect: ((path: string) => void) | null = null;
+  private onFileDoubleClick: ((path: string) => void) | null = null;
   private bookmarks: Bookmark[] = [];
   private bookmarkList: HTMLElement;
   private focusedRow: HTMLElement | null = null;
+  private clickTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -41,7 +43,8 @@ export class FileExplorer {
     header.className = "explorer-header";
     header.innerHTML = `
       <button id="btn-open-folder" title="Open Folder">Open Folder</button>
-      <button id="btn-new-md" title="New .md file in current folder">+ New .md</button>
+      <button id="btn-new-md" title="New .md file in current folder">+ .md</button>
+      <button id="btn-new-daily" title="New daily note in 0.Daily Notes">+ DN</button>
     `;
     this.container.appendChild(header);
 
@@ -61,6 +64,11 @@ export class FileExplorer {
       this.promptNewFile();
     });
 
+    // Daily note button handler
+    header.querySelector("#btn-new-daily")!.addEventListener("click", () => {
+      this.createDailyNote().catch((err) => console.error("Daily note error:", err));
+    });
+
     // Load bookmarks
     this.loadBookmarks();
   }
@@ -71,6 +79,10 @@ export class FileExplorer {
 
   setOnFileSelect(callback: (path: string) => void): void {
     this.onFileSelect = callback;
+  }
+
+  setOnFileDoubleClick(callback: (path: string) => void): void {
+    this.onFileDoubleClick = callback;
   }
 
   async openFolder(path: string): Promise<void> {
@@ -178,6 +190,44 @@ export class FileExplorer {
     });
   }
 
+  private async createDailyNote(): Promise<void> {
+    if (!this.rootPath) {
+      console.error("createDailyNote: no rootPath");
+      return;
+    }
+
+    try {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const dateStr = `${yyyy}.${mm}.${dd}`;
+
+      const dirPath = this.rootPath + "/0.Daily Notes";
+      const filePath = dirPath + "/" + dateStr + ".md";
+
+      let exists = false;
+      try {
+        await readFile(filePath);
+        exists = true;
+      } catch {
+        // File doesn't exist — will create
+      }
+
+      if (!exists) {
+        const template = "# " + dateStr + "\n\n### Priorities for Today\n\n---\n\n- [ ]\n\n<br />\n\n### Stuff I Worked on Today\n\n---\n\n1.\n\n<br />\n\n#### Captured Actions\n\n---\n\n- [ ]\n\n<br />\n\n#### General Notes\n\n---\n\n1.\n";
+        await writeFile(filePath, template);
+      }
+
+      this.expandedDirs.add(dirPath);
+      await this.renderTree();
+      this.onFileSelect?.(filePath);
+    } catch (err) {
+      console.error("createDailyNote failed:", err);
+      alert("Failed to create daily note: " + err);
+    }
+  }
+
   private async renderTree(): Promise<void> {
     if (!this.rootPath) return;
     this.treeContainer.innerHTML = "";
@@ -238,7 +288,22 @@ export class FileExplorer {
 
           row.addEventListener("click", () => {
             this.setFocusedRow(row);
-            this.onFileSelect?.(entry.path);
+            if (this.clickTimer) clearTimeout(this.clickTimer);
+            this.clickTimer = setTimeout(() => {
+              this.onFileSelect?.(entry.path);
+            }, 250);
+          });
+
+          row.addEventListener("dblclick", () => {
+            if (this.clickTimer) {
+              clearTimeout(this.clickTimer);
+              this.clickTimer = null;
+            }
+            if (isMd && this.onFileDoubleClick) {
+              this.onFileDoubleClick(entry.path);
+            } else {
+              this.onFileSelect?.(entry.path);
+            }
           });
 
           container.appendChild(row);
@@ -253,7 +318,17 @@ export class FileExplorer {
   }
 
   private getVisibleRows(): HTMLElement[] {
-    return Array.from(this.treeContainer.querySelectorAll(".tree-row")) as HTMLElement[];
+    const allRows = Array.from(this.treeContainer.querySelectorAll(".tree-row")) as HTMLElement[];
+    return allRows.filter((row) => {
+      let el: HTMLElement | null = row.parentElement;
+      while (el && el !== this.treeContainer) {
+        if (el.classList.contains("tree-children") && el.style.display === "none") {
+          return false;
+        }
+        el = el.parentElement;
+      }
+      return true;
+    });
   }
 
   private setFocusedRow(row: HTMLElement): void {

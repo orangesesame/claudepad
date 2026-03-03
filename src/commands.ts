@@ -143,3 +143,7 @@ export async function searchMdFiles(
 ): Promise<SearchResult[]> {
   return await invoke("search_md_files", { dir, query });
 }
+
+export async function openFileWindow(path: string): Promise<void> {
+  await invoke("open_file_window", { path });
+}

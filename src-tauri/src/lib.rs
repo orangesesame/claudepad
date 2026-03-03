@@ -1,6 +1,7 @@
 mod pty;
 mod files;
 mod claude_view;
+mod new_window;
 
 use tauri::Manager;
 
@@ -34,6 +35,7 @@ pub fn run() {
             files::load_bookmarks,
             files::list_md_files,
             files::search_md_files,
+            new_window::open_file_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ClaudePad");

@@ -8,10 +8,15 @@ export class TerminalManager {
   private tabBar: HTMLElement;
   private container: HTMLElement;
   private claudeId: string | null = null;
+  private onActivateCallback: ((id: string) => void) | null = null;
 
   constructor(tabBar: HTMLElement, container: HTMLElement) {
     this.tabBar = tabBar;
     this.container = container;
+  }
+
+  setOnActivate(cb: (id: string) => void): void {
+    this.onActivateCallback = cb;
   }
 
   async addTerminal(): Promise<TerminalTab> {
@@ -142,6 +147,8 @@ export class TerminalManager {
         });
       }
     }
+
+    this.onActivateCallback?.(id);
   }
 
   private positionClaudeView(): void {

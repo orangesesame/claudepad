@@ -12,7 +12,7 @@
       <div id="toolbar-right">
         <button id="btn-copy-to-md" title="Copy latest output to editor at cursor">Copy to .md</button>
         <button id="btn-claude" title="Open Claude Chat" class="mode-btn">Claude</button>
-        <button id="btn-terminal" title="Show Terminal" class="mode-btn active">Terminal</button>
+        <button id="btn-terminal" title="Show Terminal" class="mode-btn">Terminal</button>
         <button id="btn-new-term" title="New Terminal Tab">+ Term</button>
       </div>
     </div>
@@ -20,30 +20,20 @@
       <div id="explorer-pane"></div>
       <div id="splitter-explorer"></div>
       <div id="editor-pane">
-        <div id="editor-header">
-          <div id="editor-header-left">
+        <div id="editor-tabs"></div>
+        <div id="editor-controls">
+          <div id="editor-controls-left">
             <button id="btn-all-tasks" title="Collect all unchecked tasks across workspace">All Tasks</button>
             <button id="btn-daily-tasks" title="Collect unchecked tasks from daily notes">Daily Tasks</button>
           </div>
-          <div id="editor-header-right">
-            <button id="btn-toggle-preview" title="Toggle Preview (Cmd+P)" class="mode-btn active">Preview</button>
+          <div id="editor-controls-center">
+            <span id="editor-filename"></span>
+            <span id="editor-close-btn" title="Close file">&times;</span>
+          </div>
+          <div id="editor-controls-right">
+            <button id="btn-split" title="Toggle Split View" class="mode-btn">Split</button>
           </div>
         </div>
-        <div id="format-toolbar">
-          <button id="fmt-bold" title="Bold (Cmd+B)"><b>B</b></button>
-          <button id="fmt-italic" title="Italic (Cmd+I)"><i>I</i></button>
-          <button id="fmt-underline" title="Underline"><u>U</u></button>
-          <span class="fmt-sep"></span>
-          <button id="fmt-h1" title="Heading 1">H1</button>
-          <button id="fmt-h2" title="Heading 2">H2</button>
-          <button id="fmt-h3" title="Heading 3">H3</button>
-          <span class="fmt-sep"></span>
-          <button id="fmt-ul" title="Bullet List">&#8226; List</button>
-          <button id="fmt-ol" title="Numbered List">1. List</button>
-        </div>
-        <div id="editor-container"></div>
-        <div id="preview-container" class="hidden"></div>
-        <div id="editor-tabs"></div>
       </div>
       <div id="splitter"></div>
       <div id="terminal-pane">
@@ -51,7 +41,7 @@
         <div id="terminal-container"></div>
       </div>
     </div>
-    <div id="version-label">v1.0</div>
+    <div id="version-label"></div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

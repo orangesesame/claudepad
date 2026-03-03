@@ -1,10 +1,11 @@
+declare const __APP_VERSION__: string;
 import "@xterm/xterm/css/xterm.css";
 import { TerminalManager } from "./terminal/terminal-manager";
 import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard, collectTasks, writeFile, TaskFile } from "./commands";
+import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard, collectTasks, writeFile, TaskFile, openFileWindow } from "./commands";
 import { QuickOpen } from "./quick-open";
 import { GlobalSearch } from "./search/global-search";
 
@@ -19,17 +20,40 @@ document.addEventListener("DOMContentLoaded", async () => {
   const terminalTabs = document.getElementById("terminal-tabs")!;
   const terminalContainer = document.getElementById("terminal-container")!;
   const editorTabs = document.getElementById("editor-tabs")!;
-  const editorContainer = document.getElementById("editor-container")!;
-  const previewContainer = document.getElementById("preview-container")!;
+
+  // Check for single-file mode (opened from double-click in explorer)
+  const urlParams = new URLSearchParams(window.location.search);
+  const singleFilePath = urlParams.get("file");
+
+  if (singleFilePath) {
+    // Single-file mode: hide everything except the editor
+    explorerPane.style.display = "none";
+    splitterExplorerEl.style.display = "none";
+    terminalPane.style.display = "none";
+    splitterEl.style.display = "none";
+    document.getElementById("toolbar")!.style.display = "none";
+
+    const editorManager = new EditorManager(editorTabs, editorPane);
+    await editorManager.openFileByPath(decodeURIComponent(singleFilePath));
+
+    // Version label
+    document.getElementById("version-label")!.textContent = `v${__APP_VERSION__}`;
+    return;
+  }
 
   // Initialize managers
   const terminalManager = new TerminalManager(terminalTabs, terminalContainer);
-  const editorManager = new EditorManager(editorTabs, editorContainer, previewContainer);
+  const editorManager = new EditorManager(editorTabs, editorPane);
   const explorer = new FileExplorer(explorerPane);
 
   // Wire explorer file selection to editor
   explorer.setOnFileSelect((path) => {
     editorManager.openFileByPath(path);
+  });
+
+  // Wire explorer double-click to open in new window
+  explorer.setOnFileDoubleClick((path) => {
+    openFileWindow(path);
   });
 
   // Quick Open (Cmd+Shift+P)
@@ -76,16 +100,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     // No saved folder — that's fine
   }
 
-  // --- Mode buttons: Claude / Terminal / Preview ---
+  // --- Mode buttons: Claude / Terminal ---
   const claudeBtn = document.getElementById("btn-claude")!;
   const terminalBtn = document.getElementById("btn-terminal")!;
-  const previewBtn = document.getElementById("btn-toggle-preview")!;
 
   const setActiveMode = (btn: HTMLElement) => {
     claudeBtn.classList.remove("active");
     terminalBtn.classList.remove("active");
     btn.classList.add("active");
   };
+
+  // Set initial terminal button active
+  setActiveMode(terminalBtn);
+
+  // Sync toolbar buttons when terminal tabs are clicked directly
+  terminalManager.setOnActivate((id) => {
+    if (id === "claude-tab") {
+      setActiveMode(claudeBtn);
+    } else {
+      setActiveMode(terminalBtn);
+    }
+  });
 
   // Claude button — opens Claude as a tab in the terminal pane
   claudeBtn.addEventListener("click", () => {
@@ -97,10 +132,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     terminalManager.activateByIndex(0);
   });
 
-  // Preview button — toggles markdown preview (independent of Claude/Terminal)
-  previewBtn.addEventListener("click", () => {
-    editorManager.togglePreview();
-    previewBtn.classList.toggle("active");
+  // Split button — toggles split editor view
+  const splitBtn = document.getElementById("btn-split")!;
+  splitBtn.addEventListener("click", async () => {
+    await editorManager.toggleSplit();
+    splitBtn.classList.toggle("active");
+  });
+
+  // Filename display — double-click to rename
+  const filenameEl = document.getElementById("editor-filename")!;
+  filenameEl.addEventListener("dblclick", () => {
+    editorManager.renameFromFilenameBar();
+  });
+
+  // Close button — closes active file
+  document.getElementById("editor-close-btn")!.addEventListener("click", async () => {
+    const activeTab = editorManager.getActiveTabId();
+    if (activeTab) {
+      await editorManager.closeTab(activeTab);
+    }
   });
 
   // Copy to .md — grabs output from active terminal or Claude and inserts at cursor
@@ -159,7 +209,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const md = formatTasksMarkdown("All Tasks", files);
       const outPath = `${TASKS_OUTPUT_DIR}/All Tasks.md`;
       await writeFile(outPath, md);
-      editorManager.openFileByPath(outPath);
+      await editorManager.openFileByPath(outPath);
     } catch (err) {
       console.error("Failed to collect all tasks:", err);
     }
@@ -175,7 +225,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const md = formatTasksMarkdown("Daily Tasks", files);
       const outPath = `${TASKS_OUTPUT_DIR}/Daily Tasks.md`;
       await writeFile(outPath, md);
-      editorManager.openFileByPath(outPath);
+      await editorManager.openFileByPath(outPath);
     } catch (err) {
       console.error("Failed to collect daily tasks:", err);
     }
@@ -186,45 +236,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     terminalManager.addTerminal();
   });
 
-  // Formatting toolbar buttons
-  const editor = () => editorManager.getEditor();
-
-  document.getElementById("fmt-bold")!.addEventListener("click", () => {
-    editor().wrapSelection("**", "**");
-  });
-  document.getElementById("fmt-italic")!.addEventListener("click", () => {
-    editor().wrapSelection("*", "*");
-  });
-  document.getElementById("fmt-underline")!.addEventListener("click", () => {
-    editor().wrapSelection("<u>", "</u>");
-  });
-  document.getElementById("fmt-h1")!.addEventListener("click", () => {
-    editor().prefixLines("# ");
-  });
-  document.getElementById("fmt-h2")!.addEventListener("click", () => {
-    editor().prefixLines("## ");
-  });
-  document.getElementById("fmt-h3")!.addEventListener("click", () => {
-    editor().prefixLines("### ");
-  });
-  document.getElementById("fmt-ul")!.addEventListener("click", () => {
-    editor().prefixLines("- ");
-  });
-  document.getElementById("fmt-ol")!.addEventListener("click", () => {
-    editor().numberedList();
-  });
-
   // Global keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     const meta = e.metaKey || e.ctrlKey;
 
-    if (meta && e.key === "b") {
-      e.preventDefault();
-      editor().wrapSelection("**", "**");
-    } else if (meta && e.key === "i") {
-      e.preventDefault();
-      editor().wrapSelection("*", "*");
-    } else if (meta && e.key === "s") {
+    if (meta && e.key === "s") {
       e.preventDefault();
       editorManager.saveFile();
     } else if (meta && e.shiftKey && (e.key === "p" || e.key === "P")) {
@@ -235,10 +251,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       const dir = explorer.getRootPath();
       if (dir) globalSearch.show(dir);
-    } else if (meta && e.key === "p") {
-      e.preventDefault();
-      editorManager.togglePreview();
-      previewBtn.classList.toggle("active");
     } else if (meta && e.key >= "1" && e.key <= "9") {
       e.preventDefault();
       terminalManager.activateByIndex(parseInt(e.key) - 1);
@@ -249,4 +261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("resize", () => {
     terminalManager.fitAll();
   });
+
+  // Set version label from build-time constant
+  document.getElementById("version-label")!.textContent = `v${__APP_VERSION__}`;
 });

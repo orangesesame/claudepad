@@ -292,11 +292,12 @@ html, body {
   overflow: hidden;
 }
 
-/* Editor header (task buttons + preview toggle) */
-#editor-header {
+/* Editor controls bar (task buttons + filename + preview toggle) */
+#editor-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   padding: 4px 8px;
   height: var(--tab-height);
   background: var(--surface);
@@ -305,14 +306,51 @@ html, body {
   user-select: none;
 }
 
-#editor-header-left,
-#editor-header-right {
+#editor-controls-left,
+#editor-controls-right {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-#editor-header button {
+#editor-controls-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#editor-filename {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text);
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+#editor-close-btn {
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  padding: 0 2px;
+  color: var(--text);
+  transition: opacity 0.1s;
+}
+
+#editor-controls-center:hover #editor-close-btn {
+  opacity: 0.6;
+}
+
+#editor-close-btn:hover {
+  opacity: 1 !important;
+}
+
+#editor-controls button {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text);
@@ -324,150 +362,183 @@ html, body {
   line-height: 1.4;
 }
 
-#editor-header button:hover {
+#editor-controls button:hover {
   background: var(--surface-hover);
 }
 
-/* Formatting toolbar */
-#format-toolbar {
+
+/* Split wrapper - contains one or two editor pane panels */
+.split-wrapper {
   display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 8px;
-  height: var(--tab-height);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-#format-toolbar button {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  cursor: pointer;
-  line-height: 1.4;
-}
-
-#format-toolbar button:hover {
-  background: var(--surface-hover);
-  border-color: var(--border);
-}
-
-#format-toolbar button:active {
-  background: var(--selection);
-}
-
-.fmt-sep {
-  width: 1px;
-  height: 16px;
-  background: var(--border);
-  margin: 0 4px;
-}
-
-#editor-container {
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
 }
 
-#editor-container .cm-editor {
-  height: 100%;
-}
-
-#editor-container .cm-scroller {
-  overflow: auto;
-}
-
-/* Preview container */
-#preview-container {
+/* Individual editor pane panel */
+.editor-pane-panel {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Focus indicator - only visible when split is active */
+.split-wrapper.split-active .editor-pane-panel.pane-focused {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.split-wrapper.split-active .editor-pane-panel:not(.pane-focused) {
+  opacity: 0.85;
+}
+
+/* Split handle (draggable divider between two panes) */
+.split-handle {
+  height: 4px;
+  cursor: row-resize;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.split-handle:hover {
+  background: var(--accent);
+}
+
+/* Pane editor container */
+.pane-editor-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Milkdown WYSIWYG editor */
+.pane-editor-container .milkdown {
+  height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
-  padding: 16px 24px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: var(--font-size);
+}
+
+/* Milkdown Homebrew green-on-black theme
+   NOTE: !important needed because Crepe theme CSS is injected via JS after this stylesheet */
+.milkdown {
+  --crepe-color-background: var(--bg) !important;
+  --crepe-color-on-background: #00FF00 !important;
+  --crepe-color-surface: var(--surface) !important;
+  --crepe-color-surface-low: #050505 !important;
+  --crepe-color-on-surface: #00FF00 !important;
+  --crepe-color-on-surface-variant: #00AA00 !important;
+  --crepe-color-outline: #00AA00 !important;
+  --crepe-color-primary: #00FF00 !important;
+  --crepe-color-on-primary: #000000 !important;
+  --crepe-color-secondary: #005500 !important;
+  --crepe-color-on-secondary: #00FF00 !important;
+  --crepe-color-inverse: #00FF00 !important;
+  --crepe-color-on-inverse: #000000 !important;
+  --crepe-color-inline-code: #33FF33 !important;
+  --crepe-color-error: #ff3333 !important;
+  --crepe-color-hover: #0d1a0d !important;
+  --crepe-color-selected: #005500 !important;
+  --crepe-color-inline-area: var(--surface) !important;
+  --crepe-font-title: var(--font) !important;
+  --crepe-font-default: var(--font) !important;
+  --crepe-font-code: var(--font) !important;
+  --crepe-shadow-1: none !important;
+  --crepe-shadow-2: none !important;
+  font-family: var(--font) !important;
+  font-size: var(--font-size) !important;
+  color: #00FF00 !important;
+  background: var(--bg) !important;
   line-height: 1.6;
 }
 
-#preview-container p,
-#preview-container h1,
-#preview-container h2,
-#preview-container h3,
-#preview-container h4,
-#preview-container blockquote,
-#preview-container pre,
-#preview-container hr {
-  margin-left: 0;
-  margin-right: 0;
+.milkdown .ProseMirror {
+  outline: none !important;
+  padding: 8px 12px 8px 42px !important; /* left room for block handle */
 }
 
-#preview-container ul,
-#preview-container ol {
-  padding-left: 24px;
-  margin-left: 0;
+/* Shrink block handle buttons ("+" and drag grip) */
+.milkdown .milkdown-block-handle {
+  gap: 1px !important;
+  left: 6px !important;
+}
+.milkdown .milkdown-block-handle .operation-item {
+  width: 16px !important;
+  height: 16px !important;
+  padding: 1px !important;
+}
+.milkdown .milkdown-block-handle .operation-item svg {
+  width: 14px !important;
+  height: 14px !important;
 }
 
-#preview-container.hidden {
-  display: none;
+/* Smaller font sizes for preview content */
+.milkdown .ProseMirror h1 { font-size: 20px !important; }
+.milkdown .ProseMirror h2 { font-size: 17px !important; }
+.milkdown .ProseMirror h3 { font-size: 15px !important; }
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 { font-size: 13px !important; }
+.milkdown .ProseMirror p,
+.milkdown .ProseMirror li,
+.milkdown .ProseMirror td,
+.milkdown .ProseMirror th { font-size: 12px !important; }
+
+.milkdown .ProseMirror ::selection {
+  background: #005500 !important;
 }
 
-#preview-container h1,
-#preview-container h2,
-#preview-container h3,
-#preview-container h4 {
-  color: var(--text-bold);
-  margin: 1em 0 0.5em;
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  color: #33FF33 !important;
+  font-family: var(--font) !important;
 }
 
-#preview-container h1 { font-size: 1.5em; }
-#preview-container h2 { font-size: 1.3em; }
-#preview-container h3 { font-size: 1.1em; }
-
-#preview-container code {
-  background: var(--surface);
-  padding: 2px 4px;
-  border-radius: 3px;
+.milkdown .ProseMirror code {
+  color: #33FF33 !important;
 }
 
-#preview-container pre {
-  background: var(--surface);
-  padding: 12px;
-  border-radius: 4px;
-  overflow-x: auto;
-  margin: 0.5em 0;
+.milkdown .ProseMirror a {
+  color: #33FF33 !important;
 }
 
-#preview-container pre code {
-  padding: 0;
-  background: none;
+.milkdown .ProseMirror blockquote::before {
+  background: #005500 !important;
 }
 
-#preview-container a {
-  color: var(--accent);
+.milkdown .ProseMirror hr {
+  background-color: #00AA00 !important;
 }
 
-#preview-container blockquote {
-  border-left: 3px solid var(--selection);
-  padding-left: 12px;
-  color: #00AA00;
-  margin: 0.5em 0;
+/* Tab indicators for split mode */
+.tab.tab-pane-left::before {
+  content: "L";
+  font-size: 8px;
+  margin-right: 3px;
+  color: #007700;
 }
 
-/* Editor tabs (bottom of editor pane) */
+.tab.tab-pane-right::before {
+  content: "R";
+  font-size: 8px;
+  margin-right: 3px;
+  color: #007700;
+}
+
+/* Editor tabs (top of editor pane, matches terminal tabs) */
 #editor-tabs {
   display: flex;
   height: var(--tab-height);
   background: var(--surface);
-  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
   align-items: center;
   padding: 0 4px;
+  gap: 2px;
 }
 
 /* Splitter */

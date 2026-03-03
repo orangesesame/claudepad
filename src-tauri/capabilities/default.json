@@ -1,9 +1,10 @@
 {
   "identifier": "default",
   "description": "ClaudePad default capabilities",
-  "windows": ["main"],
+  "windows": ["main", "file-*"],
   "permissions": [
     "core:default",
+    "core:window:allow-create",
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
