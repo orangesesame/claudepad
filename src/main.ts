@@ -5,7 +5,7 @@ import { EditorManager } from "./editor/editor-manager";
 import { FileExplorer } from "./explorer/file-explorer";
 import { Splitter } from "./layout/splitter";
 import { open } from "@tauri-apps/plugin-dialog";
-import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard, collectTasks, writeFile, TaskFile, openFileWindow } from "./commands";
+import { saveLastFolder, loadLastFolder, copyClaudeToClipboard, readClipboard, collectTasks, writeFile, TaskFile, openFileWindow, hideClaudeView } from "./commands";
 import { QuickOpen } from "./quick-open";
 import { GlobalSearch } from "./search/global-search";
 
@@ -100,14 +100,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     // No saved folder — that's fine
   }
 
-  // --- Mode buttons: Claude / Terminal ---
+  // --- Mode buttons: Claude / Terminal (toggle terminal pane visibility) ---
   const claudeBtn = document.getElementById("btn-claude")!;
   const terminalBtn = document.getElementById("btn-terminal")!;
+  let terminalPaneVisible = true;
 
-  const setActiveMode = (btn: HTMLElement) => {
+  const setActiveMode = (btn: HTMLElement | null) => {
     claudeBtn.classList.remove("active");
     terminalBtn.classList.remove("active");
-    btn.classList.add("active");
+    if (btn) btn.classList.add("active");
+  };
+
+  const showTerminalPane = () => {
+    terminalPane.style.display = "";
+    splitterEl.style.display = "";
+    terminalPaneVisible = true;
+    requestAnimationFrame(() => terminalManager.fitAll());
+  };
+
+  const hideTerminalPane = () => {
+    terminalPane.style.display = "none";
+    splitterEl.style.display = "none";
+    terminalPaneVisible = false;
+    setActiveMode(null);
+    hideClaudeView().catch(() => {});
   };
 
   // Set initial terminal button active
@@ -122,14 +138,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Claude button — opens Claude as a tab in the terminal pane
+  // Claude button — toggle: show Claude tab or hide terminal pane
   claudeBtn.addEventListener("click", () => {
-    terminalManager.addClaudeTab();
+    if (terminalPaneVisible && claudeBtn.classList.contains("active")) {
+      hideTerminalPane();
+    } else {
+      if (!terminalPaneVisible) showTerminalPane();
+      terminalManager.addClaudeTab();
+    }
   });
 
-  // Terminal button — activates the first terminal tab
+  // Terminal button — toggle: show terminal or hide terminal pane
   terminalBtn.addEventListener("click", () => {
-    terminalManager.activateByIndex(0);
+    if (terminalPaneVisible && terminalBtn.classList.contains("active")) {
+      hideTerminalPane();
+    } else {
+      if (!terminalPaneVisible) showTerminalPane();
+      terminalManager.activateByIndex(0);
+    }
   });
 
   // Split button — toggles split editor view
