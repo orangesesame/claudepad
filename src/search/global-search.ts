@@ -9,6 +9,7 @@ export class GlobalSearch {
   private visible = false;
   private currentDir: string | null = null;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private selectedIndex = -1;
 
   constructor() {
     this.overlay = document.createElement("div");
@@ -26,7 +27,29 @@ export class GlobalSearch {
 
     this.input.addEventListener("input", () => this.debouncedSearch());
     this.input.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.hide();
+      if (e.key === "Escape") {
+        this.hide();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const max = Math.min(this.results.length, 100) - 1;
+        if (this.selectedIndex < max) {
+          this.selectedIndex++;
+          this.highlightSelected();
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (this.selectedIndex > 0) {
+          this.selectedIndex--;
+          this.highlightSelected();
+        }
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const show = this.results.slice(0, 100);
+        if (this.selectedIndex >= 0 && this.selectedIndex < show.length) {
+          this.onSelect?.(show[this.selectedIndex].path);
+          this.hide();
+        }
+      }
     });
     this.overlay.addEventListener("click", (e) => {
       if (e.target === this.overlay) this.hide();
@@ -68,6 +91,7 @@ export class GlobalSearch {
       return;
     }
     this.results = await searchMdFiles(this.currentDir, q);
+    this.selectedIndex = this.results.length > 0 ? 0 : -1;
     this.renderResults();
   }
 
@@ -86,7 +110,17 @@ export class GlobalSearch {
     }
     if (this.results.length === 0) {
       this.resultsList.innerHTML = '<div class="quick-open-row" style="color:#005500">No results</div>';
+    } else {
+      this.highlightSelected();
     }
+  }
+
+  private highlightSelected(): void {
+    const rows = this.resultsList.querySelectorAll(".search-result-row");
+    rows.forEach((row, i) => {
+      (row as HTMLElement).classList.toggle("selected", i === this.selectedIndex);
+    });
+    rows[this.selectedIndex]?.scrollIntoView({ block: "nearest" });
   }
 
   private escapeHtml(text: string): string {

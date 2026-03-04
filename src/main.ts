@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       const dir = explorer.getRootPath();
       if (dir) globalSearch.show(dir);
-    } else if (e.ctrlKey && !e.metaKey && (e.key === "f" || e.key === "F")) {
+    } else if (e.metaKey && !e.shiftKey && (e.key === "f" || e.key === "F")) {
       e.preventDefault();
       const dir = explorer.getRootPath();
       if (dir) globalSearch.show(dir);
