@@ -219,6 +219,49 @@ html, body {
   background: var(--surface-hover);
 }
 
+/* Explorer filter bar */
+.explorer-filter {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.explorer-filter-input {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  outline: none;
+  height: 20px;
+}
+
+.explorer-filter-input:focus {
+  border-color: var(--accent);
+}
+
+.explorer-filter-input::placeholder {
+  color: #005500;
+}
+
+.explorer-filter-clear {
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.6;
+}
+
+.explorer-filter-clear:hover {
+  opacity: 1;
+}
+
 .explorer-tree {
   flex: 1;
   overflow-y: auto;

@@ -18,6 +18,8 @@ export class FileExplorer {
   private focusedRow: HTMLElement | null = null;
   private clickTimer: ReturnType<typeof setTimeout> | null = null;
   private dragSourcePath: string | null = null;
+  private filterInput: HTMLInputElement;
+  private filterQuery: string = "";
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -48,6 +50,42 @@ export class FileExplorer {
       <button id="btn-new-daily" title="New daily note in 0.Daily Notes">+ DN</button>
     `;
     this.container.appendChild(header);
+
+    // Filter bar
+    const filterBar = document.createElement("div");
+    filterBar.className = "explorer-filter";
+    this.filterInput = document.createElement("input");
+    this.filterInput.type = "text";
+    this.filterInput.placeholder = "Filter files...";
+    this.filterInput.className = "explorer-filter-input";
+    const filterClear = document.createElement("span");
+    filterClear.className = "explorer-filter-clear";
+    filterClear.innerHTML = "&times;";
+    filterClear.title = "Clear filter";
+    filterClear.style.display = "none";
+    filterClear.addEventListener("click", () => {
+      this.filterInput.value = "";
+      this.filterQuery = "";
+      filterClear.style.display = "none";
+      this.applyFilter();
+      this.filterInput.focus();
+    });
+    this.filterInput.addEventListener("input", () => {
+      this.filterQuery = this.filterInput.value.toLowerCase();
+      filterClear.style.display = this.filterQuery ? "" : "none";
+      this.applyFilter();
+    });
+    this.filterInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.filterInput.value = "";
+        this.filterQuery = "";
+        filterClear.style.display = "none";
+        this.applyFilter();
+      }
+    });
+    filterBar.appendChild(this.filterInput);
+    filterBar.appendChild(filterClear);
+    this.container.appendChild(filterBar);
 
     // Tree container
     this.treeContainer = document.createElement("div");
@@ -235,7 +273,7 @@ export class FileExplorer {
       }
 
       if (!exists) {
-        const template = "# " + dateStr + "\n\n### Priorities for Today\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Stuff I Worked on Today\n\n***\n\n1.  \n\n<br />\n\n#### Captured Actions\n\n***\n\n* [ ] <br />\n\n<br />\n\n#### General Notes\n\n***\n\n1. <br />\n";
+        const template = "# " + dateStr + "\n\n### Priorities for Today\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Captured Actions\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Stuff I Worked on Today\n\n***\n\n1. <br />\n\n<br />\n\n### General Notes\n\n***\n\n1. <br />\n";
         await writeFile(filePath, template);
       }
 
@@ -437,6 +475,66 @@ export class FileExplorer {
       if (this.focusedRow) {
         this.focusedRow.click();
       }
+    }
+  }
+
+  private applyFilter(): void {
+    const query = this.filterQuery;
+    const allRows = Array.from(this.treeContainer.querySelectorAll(".tree-row")) as HTMLElement[];
+    const allChildren = Array.from(this.treeContainer.querySelectorAll(".tree-children")) as HTMLElement[];
+
+    if (!query) {
+      // Show everything, restore expand/collapse state
+      for (const row of allRows) {
+        row.style.display = "";
+      }
+      for (const children of allChildren) {
+        const folderRow = children.previousElementSibling as HTMLElement | null;
+        if (folderRow?.dataset.path) {
+          children.style.display = this.expandedDirs.has(folderRow.dataset.path) ? "" : "none";
+        }
+      }
+      return;
+    }
+
+    // First pass: determine which rows match
+    const matchSet = new Set<HTMLElement>();
+    for (const row of allRows) {
+      const label = row.querySelector(".tree-label")?.textContent?.toLowerCase() || "";
+      if (label.includes(query)) {
+        matchSet.add(row);
+      }
+    }
+
+    // Second pass: for matching files/folders, also show their ancestor folders
+    const ancestorSet = new Set<HTMLElement>();
+    for (const row of matchSet) {
+      let el: HTMLElement | null = row.parentElement;
+      while (el && el !== this.treeContainer) {
+        if (el.classList.contains("tree-children")) {
+          const folderRow = el.previousElementSibling as HTMLElement | null;
+          if (folderRow?.classList.contains("tree-row")) {
+            ancestorSet.add(folderRow);
+          }
+        }
+        el = el.parentElement;
+      }
+    }
+
+    // Also show folders that have matching descendants
+    // Third pass: for matching folders, show their direct children that match
+    const visibleSet = new Set([...matchSet, ...ancestorSet]);
+
+    for (const row of allRows) {
+      row.style.display = visibleSet.has(row) ? "" : "none";
+    }
+
+    // Expand all tree-children containers that have visible rows
+    for (const children of allChildren) {
+      const hasVisible = Array.from(children.querySelectorAll(".tree-row")).some(
+        (r) => visibleSet.has(r as HTMLElement)
+      );
+      children.style.display = hasVisible ? "" : "none";
     }
   }
 }
