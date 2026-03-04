@@ -271,6 +271,12 @@ export class EditorManager {
     }
   }
 
+  async activateTabByIndex(index: number): Promise<void> {
+    if (index >= 0 && index < this.tabs.length) {
+      await this.activateTab(this.tabs[index].id);
+    }
+  }
+
   private async activateTab(id: string): Promise<void> {
     await this.activateTabInPane(id, this.getFocusedPane());
   }

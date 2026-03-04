@@ -277,9 +277,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       const dir = explorer.getRootPath();
       if (dir) globalSearch.show(dir);
-    } else if (meta && e.key >= "1" && e.key <= "9") {
+    } else if (e.ctrlKey && !e.metaKey && (e.key === "f" || e.key === "F")) {
       e.preventDefault();
-      terminalManager.activateByIndex(parseInt(e.key) - 1);
+      const dir = explorer.getRootPath();
+      if (dir) globalSearch.show(dir);
+    } else if (e.metaKey && !e.shiftKey && e.key >= "1" && e.key <= "9") {
+      e.preventDefault();
+      editorManager.activateTabByIndex(parseInt(e.key) - 1);
     }
   });
 
