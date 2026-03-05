@@ -2,13 +2,13 @@
 
 :root {
   --bg: #000000;
-  --text: #00FF00;
-  --text-bold: #33FF33;
-  --selection: #005500;
-  --border: #00AA00;
+  --text: #f5e6b8;
+  --text-bold: #ffdd55;
+  --selection: #332b00;
+  --border: #aa8800;
   --surface: #0a0a0a;
-  --surface-hover: #0d1a0d;
-  --accent: #00FF00;
+  --surface-hover: #1a1500;
+  --accent: #f5e6b8;
   --font: "SFMono-Regular", "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
   --font-size: 12px;
   --toolbar-height: 32px;
@@ -125,7 +125,7 @@ html, body {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #007700;
+  color: #aa8800;
 }
 
 .bookmark-header button {
@@ -220,7 +220,7 @@ html, body {
 }
 
 .explorer-separator {
-  color: #007700;
+  color: #aa8800;
   font-size: 12px;
   -webkit-user-select: none;
   user-select: none;
@@ -253,7 +253,7 @@ html, body {
 }
 
 .explorer-filter-input::placeholder {
-  color: #005500;
+  color: #776600;
 }
 
 .explorer-filter-clear {
@@ -300,7 +300,7 @@ html, body {
   justify-content: center;
   width: 16px;
   font-size: 8px;
-  color: #007700;
+  color: #aa8800;
   flex-shrink: 0;
 }
 
@@ -324,7 +324,7 @@ html, body {
 }
 
 .tree-row-dimmed .tree-label {
-  color: #004400;
+  color: #665500;
 }
 
 .tree-row.dragging {
@@ -358,47 +358,27 @@ html, body {
   padding: 4px 8px;
   height: var(--tab-height);
   background: var(--surface);
-  border-bottom: 1px solid #aa8800;
+  border-bottom: 1px solid var(--border);
   -webkit-user-select: none;
   user-select: none;
 }
 
 .file-list-title {
   font-size: 11px;
-  color: #ffdd55;
+  color: var(--text-bold);
 }
 
 .file-list-close {
   font-size: 14px;
   cursor: pointer;
   opacity: 0.6;
-  color: #ffdd55;
+  color: var(--text);
 }
 
 .file-list-close:hover {
   opacity: 1;
 }
 
-/* File list rows use yellow theme */
-.explorer-tree .file-list-header ~ .tree-row .tree-label {
-  color: #f5e6b8;
-}
-
-.explorer-tree .file-list-header ~ .tree-row-folder .tree-label {
-  color: #ffdd55;
-}
-
-.explorer-tree .file-list-header ~ .tree-row .tree-arrow {
-  color: #aa8800;
-}
-
-.explorer-tree .file-list-header ~ .tree-row:hover {
-  background: #1a1500;
-}
-
-.explorer-tree .file-list-header ~ .tree-row.tree-row-active {
-  background: #332b00 !important;
-}
 
 /* Editor pane */
 #editor-pane {
@@ -540,22 +520,22 @@ html, body {
    NOTE: !important needed because Crepe theme CSS is injected via JS after this stylesheet */
 .milkdown {
   --crepe-color-background: var(--bg) !important;
-  --crepe-color-on-background: #00FF00 !important;
+  --crepe-color-on-background: #f5e6b8 !important;
   --crepe-color-surface: var(--surface) !important;
   --crepe-color-surface-low: #050505 !important;
-  --crepe-color-on-surface: #00FF00 !important;
-  --crepe-color-on-surface-variant: #00AA00 !important;
-  --crepe-color-outline: #00AA00 !important;
-  --crepe-color-primary: #00FF00 !important;
+  --crepe-color-on-surface: #f5e6b8 !important;
+  --crepe-color-on-surface-variant: #aa8800 !important;
+  --crepe-color-outline: #aa8800 !important;
+  --crepe-color-primary: #f5e6b8 !important;
   --crepe-color-on-primary: #000000 !important;
-  --crepe-color-secondary: #005500 !important;
-  --crepe-color-on-secondary: #00FF00 !important;
-  --crepe-color-inverse: #00FF00 !important;
+  --crepe-color-secondary: #332b00 !important;
+  --crepe-color-on-secondary: #f5e6b8 !important;
+  --crepe-color-inverse: #f5e6b8 !important;
   --crepe-color-on-inverse: #000000 !important;
-  --crepe-color-inline-code: #33FF33 !important;
+  --crepe-color-inline-code: #ffdd55 !important;
   --crepe-color-error: #ff3333 !important;
-  --crepe-color-hover: #0d1a0d !important;
-  --crepe-color-selected: #005500 !important;
+  --crepe-color-hover: #1a1500 !important;
+  --crepe-color-selected: #332b00 !important;
   --crepe-color-inline-area: var(--surface) !important;
   --crepe-font-title: var(--font) !important;
   --crepe-font-default: var(--font) !important;
@@ -564,7 +544,7 @@ html, body {
   --crepe-shadow-2: none !important;
   font-family: var(--font) !important;
   font-size: var(--font-size) !important;
-  color: #00FF00 !important;
+  color: #f5e6b8 !important;
   background: var(--bg) !important;
   line-height: 1.6;
 }
@@ -602,7 +582,7 @@ html, body {
 .milkdown .ProseMirror th { font-size: 12px !important; }
 
 .milkdown .ProseMirror ::selection {
-  background: #005500 !important;
+  background: #332b00 !important;
 }
 
 .milkdown .ProseMirror h1,
@@ -611,24 +591,24 @@ html, body {
 .milkdown .ProseMirror h4,
 .milkdown .ProseMirror h5,
 .milkdown .ProseMirror h6 {
-  color: #33FF33 !important;
+  color: #ffdd55 !important;
   font-family: var(--font) !important;
 }
 
 .milkdown .ProseMirror code {
-  color: #33FF33 !important;
+  color: #ffdd55 !important;
 }
 
 .milkdown .ProseMirror a {
-  color: #33FF33 !important;
+  color: #ffdd55 !important;
 }
 
 .milkdown .ProseMirror blockquote::before {
-  background: #005500 !important;
+  background: #332b00 !important;
 }
 
 .milkdown .ProseMirror hr {
-  background-color: #00AA00 !important;
+  background-color: #aa8800 !important;
 }
 
 /* Tab indicators for split mode */
@@ -636,14 +616,14 @@ html, body {
   content: "L";
   font-size: 8px;
   margin-right: 3px;
-  color: #007700;
+  color: #aa8800;
 }
 
 .tab.tab-pane-right::before {
   content: "R";
   font-size: 8px;
   margin-right: 3px;
-  color: #007700;
+  color: #aa8800;
 }
 
 /* Editor tabs (top of editor pane, matches terminal tabs) */
@@ -705,7 +685,7 @@ html, body {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 3px;
-  color: #007700;
+  color: #aa8800;
   font-family: var(--font);
   font-size: 11px;
   cursor: pointer;
@@ -762,12 +742,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #005500;
+  background: #554400;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #007700;
+  background: #aa8800;
 }
 
 /* Placeholder states */
@@ -776,7 +756,7 @@ html, body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #005500;
+  color: #776600;
   font-size: 13px;
 }
 
@@ -843,7 +823,7 @@ html, body {
 }
 
 .search-file {
-  color: #007700;
+  color: #aa8800;
   margin-right: 8px;
 }
 
@@ -858,7 +838,7 @@ html, body {
   right: 8px;
   font-family: var(--font);
   font-size: 10px;
-  color: #005500;
+  color: #776600;
   pointer-events: none;
   z-index: 10;
 }
