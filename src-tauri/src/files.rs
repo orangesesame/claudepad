@@ -252,6 +252,98 @@ pub struct SearchResult {
     pub line_text: String,
 }
 
+#[derive(Serialize)]
+pub struct FileWithTime {
+    pub name: String,
+    pub path: String,
+    pub relative: String,
+    pub created_ms: u64,
+}
+
+/// Recursively list files whose name starts with a given prefix, sorted in reverse alphabetical order.
+#[tauri::command]
+pub fn list_files_by_prefix(dir: String, prefix: String) -> Result<Vec<FileEntry>, String> {
+    let base = std::path::Path::new(&dir);
+    let mut files: Vec<FileEntry> = Vec::new();
+
+    for entry in WalkDir::new(&dir).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
+        if path.components().any(|c| {
+            c.as_os_str().to_str().map_or(false, |s| s.starts_with('.'))
+        }) {
+            continue;
+        }
+        if !name.starts_with(&prefix) {
+            continue;
+        }
+        let relative = path.strip_prefix(base)
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| name.clone());
+
+        files.push(FileEntry {
+            name,
+            path: path.to_string_lossy().to_string(),
+            relative,
+        });
+    }
+
+    // Reverse alphabetical order by name
+    files.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
+    Ok(files)
+}
+
+/// List all .md files sorted by creation time (newest first).
+#[tauri::command]
+pub fn list_md_files_by_created(dir: String) -> Result<Vec<FileWithTime>, String> {
+    let base = std::path::Path::new(&dir);
+    let mut files: Vec<FileWithTime> = Vec::new();
+
+    for entry in WalkDir::new(&dir).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
+        if !name.ends_with(".md") {
+            continue;
+        }
+        if path.components().any(|c| {
+            c.as_os_str().to_str().map_or(false, |s| s.starts_with('.'))
+        }) {
+            continue;
+        }
+        let relative = path.strip_prefix(base)
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| name.clone());
+
+        let created_ms = path.metadata()
+            .and_then(|m| m.created())
+            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as u64)
+            .unwrap_or(0);
+
+        files.push(FileWithTime {
+            name,
+            path: path.to_string_lossy().to_string(),
+            relative,
+            created_ms,
+        });
+    }
+
+    // Newest first
+    files.sort_by(|a, b| b.created_ms.cmp(&a.created_ms));
+    Ok(files)
+}
+
 #[tauri::command]
 pub fn search_md_files(dir: String, query: String) -> Result<Vec<SearchResult>, String> {
     let base = std::path::Path::new(&dir);

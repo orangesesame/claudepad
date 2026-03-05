@@ -1,4 +1,4 @@
-import { readDir, DirEntry, readFile, writeFile, renameFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder } from "../commands";
+import { readDir, DirEntry, readFile, writeFile, renameFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder, listFilesByPrefix, listMdFilesByCreated, listMdFiles, FileEntry, FileWithTime } from "../commands";
 
 const DEFAULT_BOOKMARKS: Bookmark[] = [
   { name: "Norda", path: "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda" },
@@ -20,6 +20,8 @@ export class FileExplorer {
   private dragSourcePath: string | null = null;
   private filterInput: HTMLInputElement;
   private filterQuery: string = "";
+  private filterDebounce: ReturnType<typeof setTimeout> | null = null;
+  private filterActive: boolean = false;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -45,9 +47,12 @@ export class FileExplorer {
     const header = document.createElement("div");
     header.className = "explorer-header";
     header.innerHTML = `
-      <button id="btn-open-folder" title="Open Folder">Open Folder</button>
-      <button id="btn-new-md" title="New .md file in current folder">+ .md</button>
-      <button id="btn-new-daily" title="New daily note in 0.Daily Notes">+ DN</button>
+      <button id="btn-open-folder" title="Open Folder">Folder</button>
+      <button id="btn-new-md" title="New .md file in current folder">.md</button>
+      <button id="btn-new-daily" title="New daily note in 0.Daily Notes">+DN</button>
+      <span class="explorer-separator">|</span>
+      <button id="btn-list-26" title="List 26.* files in Norda (reverse order)">26.</button>
+      <button id="btn-list-recent-md" title="Recent .md files in Norda">Recent</button>
     `;
     this.container.appendChild(header);
 
@@ -67,20 +72,27 @@ export class FileExplorer {
       this.filterInput.value = "";
       this.filterQuery = "";
       filterClear.style.display = "none";
-      this.applyFilter();
+      this.clearFilter();
       this.filterInput.focus();
     });
     this.filterInput.addEventListener("input", () => {
       this.filterQuery = this.filterInput.value.toLowerCase();
       filterClear.style.display = this.filterQuery ? "" : "none";
-      this.applyFilter();
+      if (this.filterDebounce) clearTimeout(this.filterDebounce);
+      if (!this.filterQuery) {
+        this.clearFilter();
+        return;
+      }
+      this.filterDebounce = setTimeout(() => {
+        this.applyNordaFilter(this.filterQuery);
+      }, 300);
     });
     this.filterInput.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         this.filterInput.value = "";
         this.filterQuery = "";
         filterClear.style.display = "none";
-        this.applyFilter();
+        this.clearFilter();
       }
     });
     filterBar.appendChild(this.filterInput);
@@ -106,6 +118,16 @@ export class FileExplorer {
     // Daily note button handler
     header.querySelector("#btn-new-daily")!.addEventListener("click", () => {
       this.createDailyNote().catch((err) => console.error("Daily note error:", err));
+    });
+
+    // 26.* files button handler
+    header.querySelector("#btn-list-26")!.addEventListener("click", () => {
+      this.showNordaFileList("26.").catch((err) => console.error("26. list error:", err));
+    });
+
+    // Recent .md files button handler
+    header.querySelector("#btn-list-recent-md")!.addEventListener("click", () => {
+      this.showRecentMdList().catch((err) => console.error("Recent md list error:", err));
     });
 
     // Load bookmarks
@@ -284,6 +306,63 @@ export class FileExplorer {
       console.error("createDailyNote failed:", err);
       alert("Failed to create daily note: " + err);
     }
+  }
+
+  private readonly NORDA_PATH = "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda";
+
+  private showFileListPanel(title: string, items: { name: string; path: string; relative: string }[]): void {
+    this.treeContainer.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "file-list-header";
+    header.innerHTML = `<span class="file-list-title">${title}</span><span class="file-list-close" title="Back to tree">&times;</span>`;
+    header.querySelector(".file-list-close")!.addEventListener("click", () => {
+      this.renderTree();
+    });
+    this.treeContainer.appendChild(header);
+
+    if (items.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.style.height = "60px";
+      empty.textContent = "No files found";
+      this.treeContainer.appendChild(empty);
+      return;
+    }
+
+    for (const item of items) {
+      const row = document.createElement("div");
+      row.className = "tree-row tree-row-file";
+      row.style.paddingLeft = "8px";
+      row.dataset.path = item.path;
+      row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label" title="${item.relative}">${item.relative}</span>`;
+      row.addEventListener("click", () => {
+        this.setFocusedRow(row);
+        this.onFileSelect?.(item.path);
+      });
+      row.addEventListener("dblclick", () => {
+        if (item.name.endsWith(".md") && this.onFileDoubleClick) {
+          this.onFileDoubleClick(item.path);
+        } else {
+          this.onFileSelect?.(item.path);
+        }
+      });
+      this.treeContainer.appendChild(row);
+    }
+  }
+
+  private async showNordaFileList(prefix: string): Promise<void> {
+    const files = await listFilesByPrefix(this.NORDA_PATH, prefix);
+    this.showFileListPanel(`Files: ${prefix}*`, files);
+  }
+
+  private async showRecentMdList(): Promise<void> {
+    const files = await listMdFilesByCreated(this.NORDA_PATH);
+    this.showFileListPanel("Recent .md files", files.map((f: FileWithTime) => ({
+      name: f.name,
+      path: f.path,
+      relative: f.relative,
+    })));
   }
 
   private async renderTree(): Promise<void> {
@@ -478,63 +557,25 @@ export class FileExplorer {
     }
   }
 
-  private applyFilter(): void {
-    const query = this.filterQuery;
-    const allRows = Array.from(this.treeContainer.querySelectorAll(".tree-row")) as HTMLElement[];
-    const allChildren = Array.from(this.treeContainer.querySelectorAll(".tree-children")) as HTMLElement[];
-
-    if (!query) {
-      // Show everything, restore expand/collapse state
-      for (const row of allRows) {
-        row.style.display = "";
-      }
-      for (const children of allChildren) {
-        const folderRow = children.previousElementSibling as HTMLElement | null;
-        if (folderRow?.dataset.path) {
-          children.style.display = this.expandedDirs.has(folderRow.dataset.path) ? "" : "none";
-        }
-      }
-      return;
+  private clearFilter(): void {
+    if (this.filterActive) {
+      this.filterActive = false;
+      this.renderTree();
     }
+  }
 
-    // First pass: determine which rows match
-    const matchSet = new Set<HTMLElement>();
-    for (const row of allRows) {
-      const label = row.querySelector(".tree-label")?.textContent?.toLowerCase() || "";
-      if (label.includes(query)) {
-        matchSet.add(row);
-      }
-    }
-
-    // Second pass: for matching files/folders, also show their ancestor folders
-    const ancestorSet = new Set<HTMLElement>();
-    for (const row of matchSet) {
-      let el: HTMLElement | null = row.parentElement;
-      while (el && el !== this.treeContainer) {
-        if (el.classList.contains("tree-children")) {
-          const folderRow = el.previousElementSibling as HTMLElement | null;
-          if (folderRow?.classList.contains("tree-row")) {
-            ancestorSet.add(folderRow);
-          }
-        }
-        el = el.parentElement;
-      }
-    }
-
-    // Also show folders that have matching descendants
-    // Third pass: for matching folders, show their direct children that match
-    const visibleSet = new Set([...matchSet, ...ancestorSet]);
-
-    for (const row of allRows) {
-      row.style.display = visibleSet.has(row) ? "" : "none";
-    }
-
-    // Expand all tree-children containers that have visible rows
-    for (const children of allChildren) {
-      const hasVisible = Array.from(children.querySelectorAll(".tree-row")).some(
-        (r) => visibleSet.has(r as HTMLElement)
+  private async applyNordaFilter(query: string): Promise<void> {
+    try {
+      const allFiles = await listMdFiles(this.NORDA_PATH);
+      const matches = allFiles.filter((f: FileEntry) =>
+        f.name.toLowerCase().includes(query) || f.relative.toLowerCase().includes(query)
       );
-      children.style.display = hasVisible ? "" : "none";
+      // If query changed while we were fetching, ignore stale results
+      if (this.filterQuery !== query) return;
+      this.filterActive = true;
+      this.showFileListPanel(`Filter: "${query}"`, matches);
+    } catch (err) {
+      console.error("Filter search error:", err);
     }
   }
 }

@@ -35,6 +35,8 @@ pub fn run() {
             files::load_bookmarks,
             files::list_md_files,
             files::search_md_files,
+            files::list_files_by_prefix,
+            files::list_md_files_by_created,
             new_window::open_file_window,
         ])
         .run(tauri::generate_context!())

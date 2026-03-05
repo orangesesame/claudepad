@@ -137,6 +137,21 @@ export interface SearchResult {
   line_text: string;
 }
 
+export interface FileWithTime {
+  name: string;
+  path: string;
+  relative: string;
+  created_ms: number;
+}
+
+export async function listFilesByPrefix(dir: string, prefix: string): Promise<FileEntry[]> {
+  return await invoke("list_files_by_prefix", { dir, prefix });
+}
+
+export async function listMdFilesByCreated(dir: string): Promise<FileWithTime[]> {
+  return await invoke("list_md_files_by_created", { dir });
+}
+
 export async function searchMdFiles(
   dir: string,
   query: string
