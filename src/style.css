@@ -343,6 +343,13 @@ html, body {
   font-size: 11px;
 }
 
+/* Explorer header active button */
+.explorer-header button.active {
+  background: var(--selection);
+  border-color: var(--text);
+  color: var(--text-bold);
+}
+
 /* File list panel header (26.* / Recent views) */
 .file-list-header {
   display: flex;
@@ -351,25 +358,46 @@ html, body {
   padding: 4px 8px;
   height: var(--tab-height);
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #aa8800;
   -webkit-user-select: none;
   user-select: none;
 }
 
 .file-list-title {
   font-size: 11px;
-  color: var(--text-bold);
+  color: #ffdd55;
 }
 
 .file-list-close {
   font-size: 14px;
   cursor: pointer;
   opacity: 0.6;
-  color: var(--text);
+  color: #ffdd55;
 }
 
 .file-list-close:hover {
   opacity: 1;
+}
+
+/* File list rows use yellow theme */
+.explorer-tree .file-list-header ~ .tree-row .tree-label {
+  color: #f5e6b8;
+}
+
+.explorer-tree .file-list-header ~ .tree-row-folder .tree-label {
+  color: #ffdd55;
+}
+
+.explorer-tree .file-list-header ~ .tree-row .tree-arrow {
+  color: #aa8800;
+}
+
+.explorer-tree .file-list-header ~ .tree-row:hover {
+  background: #1a1500;
+}
+
+.explorer-tree .file-list-header ~ .tree-row.tree-row-active {
+  background: #332b00 !important;
 }
 
 /* Editor pane */

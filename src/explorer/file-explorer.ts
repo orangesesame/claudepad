@@ -22,6 +22,9 @@ export class FileExplorer {
   private filterQuery: string = "";
   private filterDebounce: ReturnType<typeof setTimeout> | null = null;
   private filterActive: boolean = false;
+  private listPanelActive: string | null = null;
+  private btn26: HTMLButtonElement | null = null;
+  private btnRecent: HTMLButtonElement | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -121,12 +124,22 @@ export class FileExplorer {
     });
 
     // 26.* files button handler
-    header.querySelector("#btn-list-26")!.addEventListener("click", () => {
+    this.btn26 = header.querySelector("#btn-list-26")! as HTMLButtonElement;
+    this.btn26.addEventListener("click", () => {
+      if (this.listPanelActive === "26.") {
+        this.clearListPanel();
+        return;
+      }
       this.showNordaFileList("26.").catch((err) => console.error("26. list error:", err));
     });
 
     // Recent .md files button handler
-    header.querySelector("#btn-list-recent-md")!.addEventListener("click", () => {
+    this.btnRecent = header.querySelector("#btn-list-recent-md")! as HTMLButtonElement;
+    this.btnRecent.addEventListener("click", () => {
+      if (this.listPanelActive === "recent") {
+        this.clearListPanel();
+        return;
+      }
       this.showRecentMdList().catch((err) => console.error("Recent md list error:", err));
     });
 
@@ -310,6 +323,17 @@ export class FileExplorer {
 
   private readonly NORDA_PATH = "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda";
 
+  private updateListButtons(): void {
+    this.btn26?.classList.toggle("active", this.listPanelActive === "26.");
+    this.btnRecent?.classList.toggle("active", this.listPanelActive === "recent");
+  }
+
+  private clearListPanel(): void {
+    this.listPanelActive = null;
+    this.updateListButtons();
+    this.renderTree();
+  }
+
   private showFileListPanel(title: string, items: { name: string; path: string; relative: string; isDir?: boolean }[]): void {
     this.treeContainer.innerHTML = "";
 
@@ -318,7 +342,7 @@ export class FileExplorer {
     header.innerHTML = `<span class="file-list-title">${title}</span><span class="file-list-close" title="Back to tree">&times;</span>`;
     header.querySelector(".file-list-close")!.addEventListener("click", () => {
       this.filterActive = false;
-      this.renderTree();
+      this.clearListPanel();
     });
     this.treeContainer.appendChild(header);
 
@@ -361,18 +385,22 @@ export class FileExplorer {
   }
 
   private async showNordaFileList(prefix: string): Promise<void> {
+    this.listPanelActive = "26.";
+    this.updateListButtons();
     const files = await listFilesByPrefix(this.NORDA_PATH, prefix);
-    this.showFileListPanel(`Files: ${prefix}*`, files.map((f: FileEntry) => ({
+    this.showFileListPanel(`${prefix}*`, files.map((f: FileEntry) => ({
       name: f.name,
       path: f.path,
-      relative: f.relative,
+      relative: f.name,
       isDir: f.is_dir,
     })));
   }
 
   private async showRecentMdList(): Promise<void> {
+    this.listPanelActive = "recent";
+    this.updateListButtons();
     const files = await listMdFilesByCreated(this.NORDA_PATH);
-    this.showFileListPanel("Recent .md files", files.map((f: FileWithTime) => ({
+    this.showFileListPanel("Recent .md", files.map((f: FileWithTime) => ({
       name: f.name,
       path: f.path,
       relative: f.relative,
