@@ -310,13 +310,14 @@ export class FileExplorer {
 
   private readonly NORDA_PATH = "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda";
 
-  private showFileListPanel(title: string, items: { name: string; path: string; relative: string }[]): void {
+  private showFileListPanel(title: string, items: { name: string; path: string; relative: string; isDir?: boolean }[]): void {
     this.treeContainer.innerHTML = "";
 
     const header = document.createElement("div");
     header.className = "file-list-header";
     header.innerHTML = `<span class="file-list-title">${title}</span><span class="file-list-close" title="Back to tree">&times;</span>`;
     header.querySelector(".file-list-close")!.addEventListener("click", () => {
+      this.filterActive = false;
       this.renderTree();
     });
     this.treeContainer.appendChild(header);
@@ -332,28 +333,41 @@ export class FileExplorer {
 
     for (const item of items) {
       const row = document.createElement("div");
-      row.className = "tree-row tree-row-file";
+      const isFolder = item.isDir === true;
+      row.className = isFolder ? "tree-row tree-row-folder" : "tree-row tree-row-file";
       row.style.paddingLeft = "8px";
       row.dataset.path = item.path;
-      row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label" title="${item.relative}">${item.relative}</span>`;
+      row.innerHTML = `<span class="tree-arrow">${isFolder ? "&#9654;" : "&nbsp;"}</span><span class="tree-label" title="${item.relative}">${item.relative}</span>`;
       row.addEventListener("click", () => {
         this.setFocusedRow(row);
-        this.onFileSelect?.(item.path);
-      });
-      row.addEventListener("dblclick", () => {
-        if (item.name.endsWith(".md") && this.onFileDoubleClick) {
-          this.onFileDoubleClick(item.path);
+        if (isFolder) {
+          this.openFolder(item.path);
+          saveLastFolder(item.path).catch(() => {});
         } else {
           this.onFileSelect?.(item.path);
         }
       });
+      if (!isFolder) {
+        row.addEventListener("dblclick", () => {
+          if (item.name.endsWith(".md") && this.onFileDoubleClick) {
+            this.onFileDoubleClick(item.path);
+          } else {
+            this.onFileSelect?.(item.path);
+          }
+        });
+      }
       this.treeContainer.appendChild(row);
     }
   }
 
   private async showNordaFileList(prefix: string): Promise<void> {
     const files = await listFilesByPrefix(this.NORDA_PATH, prefix);
-    this.showFileListPanel(`Files: ${prefix}*`, files);
+    this.showFileListPanel(`Files: ${prefix}*`, files.map((f: FileEntry) => ({
+      name: f.name,
+      path: f.path,
+      relative: f.relative,
+      isDir: f.is_dir,
+    })));
   }
 
   private async showRecentMdList(): Promise<void> {

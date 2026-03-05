@@ -205,6 +205,8 @@ pub struct FileEntry {
     pub name: String,
     pub path: String,
     pub relative: String,
+    #[serde(default)]
+    pub is_dir: bool,
 }
 
 #[tauri::command]
@@ -237,6 +239,7 @@ pub fn list_md_files(dir: String) -> Result<Vec<FileEntry>, String> {
             name,
             path: path.to_string_lossy().to_string(),
             relative,
+            is_dir: path.is_dir(),
         });
     }
 
@@ -266,9 +269,11 @@ pub fn list_files_by_prefix(dir: String, prefix: String) -> Result<Vec<FileEntry
     let base = std::path::Path::new(&dir);
     let mut files: Vec<FileEntry> = Vec::new();
 
+    let base_path = std::path::Path::new(&dir);
     for entry in WalkDir::new(&dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
-        if !path.is_file() {
+        // Skip the root directory itself
+        if path == base_path {
             continue;
         }
         let name = match path.file_name().and_then(|n| n.to_str()) {
@@ -291,6 +296,7 @@ pub fn list_files_by_prefix(dir: String, prefix: String) -> Result<Vec<FileEntry
             name,
             path: path.to_string_lossy().to_string(),
             relative,
+            is_dir: path.is_dir(),
         });
     }
 

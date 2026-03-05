@@ -124,6 +124,7 @@ export interface FileEntry {
   name: string;
   path: string;
   relative: string;
+  is_dir: boolean;
 }
 
 export async function listMdFiles(dir: string): Promise<FileEntry[]> {
