@@ -1,16 +1,15 @@
 {
   "name": "claudepad",
   "private": true,
-  "version": "2.0.21",
+  "version": "22.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "./scripts/bump-version.sh minor",
+    "prebuild": "./scripts/bump-version.sh",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "bump:minor": "./scripts/bump-version.sh minor",
-    "bump:major": "./scripts/bump-version.sh major"
+    "bump": "./scripts/bump-version.sh"
   },
   "dependencies": {
     "@milkdown/crepe": "^7.18.0",

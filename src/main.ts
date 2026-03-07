@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await editorManager.openFileByPath(decodeURIComponent(singleFilePath));
 
     // Version label
-    document.getElementById("version-label")!.textContent = `v${__APP_VERSION__}`;
+    document.getElementById("version-label")!.textContent = `v${__APP_VERSION__.split(".")[0]}`;
     return;
   }
 
@@ -293,5 +293,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Set version label from build-time constant
-  document.getElementById("version-label")!.textContent = `v${__APP_VERSION__}`;
+  document.getElementById("version-label")!.textContent = `v${__APP_VERSION__.split(".")[0]}`;
 });
