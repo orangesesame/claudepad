@@ -1,6 +1,6 @@
 {
   "productName": "ClaudePad",
-  "version": "23.0.0",
+  "version": "27.0.0",
   "identifier": "com.claudepad.ide",
   "build": {
     "frontendDist": "../dist",
@@ -12,8 +12,8 @@
     "windows": [
       {
         "title": "ClaudePad",
-        "width": 1400,
-        "height": 900,
+        "width": 1600,
+        "height": 950,
         "minWidth": 800,
         "minHeight": 500,
         "decorations": true,

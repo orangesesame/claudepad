@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Mode buttons: Claude / Terminal (toggle terminal pane visibility) ---
   const claudeBtn = document.getElementById("btn-claude")!;
   const terminalBtn = document.getElementById("btn-terminal")!;
-  let terminalPaneVisible = true;
+  let terminalPaneVisible = false;
 
   const setActiveMode = (btn: HTMLElement | null) => {
     claudeBtn.classList.remove("active");
@@ -126,8 +126,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     hideClaudeView().catch(() => {});
   };
 
-  // Set initial terminal button active
-  setActiveMode(terminalBtn);
+  // Start with terminal pane hidden
+  terminalPane.style.display = "none";
+  splitterEl.style.display = "none";
 
   // Sync toolbar buttons when terminal tabs are clicked directly
   terminalManager.setOnActivate((id) => {
