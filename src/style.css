@@ -832,28 +832,12 @@ html, body {
 }
 
 /* Calendar widget */
-.calendar-wrapper {
-  position: relative;
-}
-
 .calendar-section {
+  border-bottom: 1px solid var(--border);
   padding: 4px;
   flex-shrink: 0;
   -webkit-user-select: none;
   user-select: none;
-}
-
-.calendar-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 100;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  width: 200px;
-  margin-top: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .calendar-header {

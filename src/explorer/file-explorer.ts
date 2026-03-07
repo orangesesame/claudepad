@@ -114,38 +114,13 @@ export class FileExplorer {
     this.treeContainer.innerHTML = '<div class="empty-state">No folder open</div>';
     this.treeContainer.tabIndex = 0;
 
-    // Calendar widget — positioned in editor-controls-right as a dropdown
+    // Calendar widget — at the top of the explorer pane, above Workspaces
     const now = new Date();
     this.calendarMonth = now.getMonth();
     this.calendarYear = now.getFullYear();
-
-    const controlsRight = document.getElementById("editor-controls-right");
-    if (controlsRight) {
-      const calWrapper = document.createElement("div");
-      calWrapper.className = "calendar-wrapper";
-
-      const calBtn = document.createElement("button");
-      calBtn.id = "btn-calendar";
-      calBtn.title = "Toggle Calendar";
-      calBtn.textContent = "Cal";
-      calWrapper.appendChild(calBtn);
-
-      this.calendarContainer = document.createElement("div");
-      this.calendarContainer.className = "calendar-section calendar-dropdown";
-      this.calendarContainer.style.display = "none";
-      calWrapper.appendChild(this.calendarContainer);
-
-      controlsRight.insertBefore(calWrapper, controlsRight.firstChild);
-
-      calBtn.addEventListener("click", () => {
-        const visible = this.calendarContainer.style.display !== "none";
-        this.calendarContainer.style.display = visible ? "none" : "block";
-      });
-    } else {
-      this.calendarContainer = document.createElement("div");
-      this.calendarContainer.className = "calendar-section";
-      this.container.appendChild(this.calendarContainer);
-    }
+    this.calendarContainer = document.createElement("div");
+    this.calendarContainer.className = "calendar-section";
+    this.container.insertBefore(this.calendarContainer, this.container.firstChild);
     this.renderCalendar();
 
     // Keyboard navigation
