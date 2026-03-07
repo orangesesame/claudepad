@@ -114,13 +114,38 @@ export class FileExplorer {
     this.treeContainer.innerHTML = '<div class="empty-state">No folder open</div>';
     this.treeContainer.tabIndex = 0;
 
-    // Calendar widget
+    // Calendar widget — positioned in editor-controls-right as a dropdown
     const now = new Date();
     this.calendarMonth = now.getMonth();
     this.calendarYear = now.getFullYear();
-    this.calendarContainer = document.createElement("div");
-    this.calendarContainer.className = "calendar-section";
-    this.container.appendChild(this.calendarContainer);
+
+    const controlsRight = document.getElementById("editor-controls-right");
+    if (controlsRight) {
+      const calWrapper = document.createElement("div");
+      calWrapper.className = "calendar-wrapper";
+
+      const calBtn = document.createElement("button");
+      calBtn.id = "btn-calendar";
+      calBtn.title = "Toggle Calendar";
+      calBtn.textContent = "Cal";
+      calWrapper.appendChild(calBtn);
+
+      this.calendarContainer = document.createElement("div");
+      this.calendarContainer.className = "calendar-section calendar-dropdown";
+      this.calendarContainer.style.display = "none";
+      calWrapper.appendChild(this.calendarContainer);
+
+      controlsRight.insertBefore(calWrapper, controlsRight.firstChild);
+
+      calBtn.addEventListener("click", () => {
+        const visible = this.calendarContainer.style.display !== "none";
+        this.calendarContainer.style.display = visible ? "none" : "block";
+      });
+    } else {
+      this.calendarContainer = document.createElement("div");
+      this.calendarContainer.className = "calendar-section";
+      this.container.appendChild(this.calendarContainer);
+    }
     this.renderCalendar();
 
     // Keyboard navigation
@@ -321,7 +346,7 @@ export class FileExplorer {
       }
 
       if (!exists) {
-        const template = "# " + dateStr + "\n\n### Priorities for Today\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Captured Actions\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Stuff I Worked on Today\n\n***\n\n1. <br />\n\n<br />\n\n### General Notes\n\n***\n\n1. <br />\n";
+        const template = "# " + dateStr + "\n\n### ToDo\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Follow-Ups\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Notes\n\n***\n\n1. <br />\n";
         await writeFile(filePath, template);
       }
 
@@ -737,6 +762,25 @@ export class FileExplorer {
     });
     this.treeContainer.appendChild(header);
 
+    // Find the daily note (if any) and separate from others
+    let dailyNote = files.find((f: DateFileEntry) => f.is_daily_note);
+
+    // Auto-create daily note if it doesn't exist
+    if (!dailyNote) {
+      const dotDate = dateStr.replace(/-/g, ".");
+      const dirPath = this.NORDA_PATH + "/0.Daily Notes";
+      const filePath = dirPath + "/" + dotDate + ".md";
+      const template = "# " + dotDate + "\n\n### ToDo\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Follow-Ups\n\n***\n\n* [ ] <br />\n\n<br />\n\n### Notes\n\n***\n\n1. <br />\n";
+      try {
+        await writeFile(filePath, template);
+        const newNote: DateFileEntry = { name: dotDate + ".md", path: filePath, relative: "0.Daily Notes/" + dotDate + ".md", is_daily_note: true, created_ms: Date.now() };
+        dailyNote = newNote;
+        files.push(newNote);
+      } catch (err) {
+        console.error("Auto-create daily note failed:", err);
+      }
+    }
+
     if (files.length === 0) {
       const empty = document.createElement("div");
       empty.className = "empty-state";
@@ -745,9 +789,6 @@ export class FileExplorer {
       this.treeContainer.appendChild(empty);
       return;
     }
-
-    // Find the daily note (if any) and separate from others
-    const dailyNote = files.find((f: DateFileEntry) => f.is_daily_note);
     const otherFiles = files.filter((f: DateFileEntry) => !f.is_daily_note);
 
     if (dailyNote) {
