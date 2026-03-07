@@ -419,6 +419,18 @@ html, body {
   transform: translateX(-50%);
 }
 
+#editor-filepath {
+  font-family: var(--font);
+  font-size: 9px;
+  color: var(--text);
+  opacity: 0.5;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
 #editor-filename {
   font-family: var(--font);
   font-size: 11px;
@@ -626,16 +638,17 @@ html, body {
   color: #aa8800;
 }
 
-/* Editor tabs (top of editor pane, matches terminal tabs) */
+/* Editor tabs (bottom of editor pane, above terminal) */
 #editor-tabs {
   display: flex;
   height: var(--tab-height);
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   overflow-x: auto;
   align-items: center;
   padding: 0 4px;
   gap: 2px;
+  order: 99;
 }
 
 /* Splitter */
@@ -919,6 +932,13 @@ html, body {
   height: 1px;
   background: var(--border);
   margin: 2px 8px;
+}
+
+.calendar-file-label {
+  white-space: normal !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
 }
 
 .calendar-daily-note .tree-label {

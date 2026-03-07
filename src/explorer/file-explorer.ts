@@ -789,7 +789,10 @@ export class FileExplorer {
     if (file.is_daily_note) row.classList.add("calendar-daily-note");
     row.style.paddingLeft = "8px";
     row.dataset.path = file.path;
-    row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label" title="${file.relative}">${file.relative}</span>`;
+    // Show only from subfolder (strip top-level folder prefix like "0.Daily Notes/")
+    const parts = file.relative.split("/");
+    const displayPath = parts.length > 1 ? parts.slice(1).join("/") : file.relative;
+    row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label calendar-file-label" title="${file.relative}">${displayPath}</span>`;
     row.addEventListener("click", () => {
       this.setFocusedRow(row);
       this.onFileSelect?.(file.path);

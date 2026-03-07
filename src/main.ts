@@ -241,21 +241,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  document.getElementById("btn-daily-tasks")!.addEventListener("click", async () => {
-    const dir = explorer.getRootPath();
-    if (!dir) return;
-    try {
-      const files = await collectTasks(dir, "^\\d{4}\\.\\d{2}\\.\\d{2}");
-      // Sort by filename descending (reverse)
-      files.sort((a, b) => b.filename.localeCompare(a.filename));
-      const md = formatTasksMarkdown("Daily Tasks", files);
-      const outPath = `${TASKS_OUTPUT_DIR}/Daily Tasks.md`;
-      await writeFile(outPath, md);
-      await editorManager.openFileByPath(outPath);
-    } catch (err) {
-      console.error("Failed to collect daily tasks:", err);
-    }
-  });
 
   // Toolbar buttons
   document.getElementById("btn-new-term")!.addEventListener("click", () => {

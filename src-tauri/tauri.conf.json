@@ -1,6 +1,6 @@
 {
   "productName": "ClaudePad",
-  "version": "22.0.0",
+  "version": "23.0.0",
   "identifier": "com.claudepad.ide",
   "build": {
     "frontendDist": "../dist",

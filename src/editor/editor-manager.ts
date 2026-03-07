@@ -367,6 +367,16 @@ export class EditorManager {
     const pane = this.getFocusedPane();
     const tab = this.tabs.find((t) => t.id === pane.activeTabId);
     this.filenameEl.textContent = tab ? tab.label : "";
+
+    const pathEl = document.getElementById("editor-filepath");
+    if (pathEl) {
+      if (tab?.path) {
+        const nordaIdx = tab.path.indexOf("Norda/");
+        pathEl.textContent = nordaIdx >= 0 ? tab.path.substring(nordaIdx) : tab.path;
+      } else {
+        pathEl.textContent = "";
+      }
+    }
   }
 
   getActiveTabId(): string | null {
