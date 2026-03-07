@@ -1,6 +1,6 @@
 [package]
 name = "claudepad"
-version = "2.0.15"
+version = "2.0.16"
 edition = "2021"
 
 [lib]
@@ -21,3 +21,4 @@ dirs = "6"
 arboard = "3"
 regex = "1"
 walkdir = "2"
+chrono = "0.4"

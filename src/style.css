@@ -831,6 +831,101 @@ html, body {
   color: var(--text);
 }
 
+/* Calendar widget */
+.calendar-section {
+  border-top: 1px solid var(--border);
+  padding: 4px;
+  flex-shrink: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+}
+
+.calendar-month-label {
+  font-size: 11px;
+  color: var(--text-bold);
+  font-weight: bold;
+}
+
+.calendar-arrow {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.calendar-arrow:hover {
+  background: var(--surface-hover);
+  border-color: var(--text);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.calendar-day-header {
+  font-size: 9px;
+  color: #aa8800;
+  text-align: center;
+  padding: 1px 0;
+}
+
+.calendar-cell {
+  font-size: 10px;
+  text-align: center;
+  padding: 2px 0;
+  cursor: pointer;
+  border-radius: 2px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.calendar-cell:hover {
+  background: var(--surface-hover);
+}
+
+.calendar-empty {
+  cursor: default;
+}
+
+.calendar-today {
+  color: var(--text-bold);
+  outline: 1px solid #aa8800;
+  outline-offset: -1px;
+}
+
+.calendar-selected {
+  background: var(--selection) !important;
+  color: var(--text-bold);
+  outline: 1px solid var(--text);
+  outline-offset: -1px;
+}
+
+.calendar-file-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 2px 8px;
+}
+
+.calendar-daily-note .tree-label {
+  color: var(--text-bold) !important;
+  font-weight: bold;
+}
+
 /* Version label */
 #version-label {
   position: fixed;

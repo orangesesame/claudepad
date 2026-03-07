@@ -153,6 +153,18 @@ export async function listMdFilesByCreated(dir: string): Promise<FileWithTime[]>
   return await invoke("list_md_files_by_created", { dir });
 }
 
+export interface DateFileEntry {
+  name: string;
+  path: string;
+  relative: string;
+  is_daily_note: boolean;
+  created_ms: number;
+}
+
+export async function listMdFilesForDate(dir: string, date: string): Promise<DateFileEntry[]> {
+  return await invoke("list_md_files_for_date", { dir, date });
+}
+
 export async function searchMdFiles(
   dir: string,
   query: string

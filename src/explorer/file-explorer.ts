@@ -1,4 +1,4 @@
-import { readDir, DirEntry, readFile, writeFile, renameFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder, listFilesByPrefix, listMdFilesByCreated, listMdFiles, FileEntry, FileWithTime } from "../commands";
+import { readDir, DirEntry, readFile, writeFile, renameFile, Bookmark, saveBookmarks, loadBookmarks, saveLastFolder, listFilesByPrefix, listMdFilesByCreated, listMdFiles, listMdFilesForDate, FileEntry, FileWithTime, DateFileEntry } from "../commands";
 
 const DEFAULT_BOOKMARKS: Bookmark[] = [
   { name: "Norda", path: "/Users/philroberts/Library/CloudStorage/OneDrive-DigitalImpactVentureStudio/Norda" },
@@ -25,6 +25,10 @@ export class FileExplorer {
   private listPanelActive: string | null = null;
   private btn26: HTMLButtonElement | null = null;
   private btnRecent: HTMLButtonElement | null = null;
+  private calendarContainer: HTMLElement;
+  private calendarMonth: number;
+  private calendarYear: number;
+  private selectedDate: string | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -109,6 +113,15 @@ export class FileExplorer {
 
     this.treeContainer.innerHTML = '<div class="empty-state">No folder open</div>';
     this.treeContainer.tabIndex = 0;
+
+    // Calendar widget
+    const now = new Date();
+    this.calendarMonth = now.getMonth();
+    this.calendarYear = now.getFullYear();
+    this.calendarContainer = document.createElement("div");
+    this.calendarContainer.className = "calendar-section";
+    this.container.appendChild(this.calendarContainer);
+    this.renderCalendar();
 
     // Keyboard navigation
     this.treeContainer.addEventListener("keydown", (e) => this.handleKeyboard(e));
@@ -619,5 +632,157 @@ export class FileExplorer {
     } catch (err) {
       console.error("Filter search error:", err);
     }
+  }
+
+  private renderCalendar(): void {
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+    const year = this.calendarYear;
+    const month = this.calendarMonth;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    this.calendarContainer.innerHTML = "";
+
+    // Header with arrows and month/year
+    const header = document.createElement("div");
+    header.className = "calendar-header";
+    header.innerHTML = `
+      <button class="calendar-arrow" id="cal-prev" title="Previous month">&#9664;</button>
+      <span class="calendar-month-label">${MONTHS[month]} ${year}</span>
+      <button class="calendar-arrow" id="cal-next" title="Next month">&#9654;</button>
+    `;
+    this.calendarContainer.appendChild(header);
+
+    header.querySelector("#cal-prev")!.addEventListener("click", () => {
+      this.calendarMonth--;
+      if (this.calendarMonth < 0) { this.calendarMonth = 11; this.calendarYear--; }
+      this.renderCalendar();
+    });
+    header.querySelector("#cal-next")!.addEventListener("click", () => {
+      this.calendarMonth++;
+      if (this.calendarMonth > 11) { this.calendarMonth = 0; this.calendarYear++; }
+      this.renderCalendar();
+    });
+
+    // Day-of-week headers
+    const dayHeaders = document.createElement("div");
+    dayHeaders.className = "calendar-grid calendar-day-headers";
+    for (const d of DAYS) {
+      const cell = document.createElement("span");
+      cell.className = "calendar-day-header";
+      cell.textContent = d;
+      dayHeaders.appendChild(cell);
+    }
+    this.calendarContainer.appendChild(dayHeaders);
+
+    // Day grid
+    const grid = document.createElement("div");
+    grid.className = "calendar-grid";
+
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement("span");
+      empty.className = "calendar-cell calendar-empty";
+      grid.appendChild(empty);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cell = document.createElement("span");
+      cell.className = "calendar-cell";
+      cell.textContent = String(day);
+
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+      if (dateStr === todayStr) {
+        cell.classList.add("calendar-today");
+      }
+      if (dateStr === this.selectedDate) {
+        cell.classList.add("calendar-selected");
+      }
+
+      cell.addEventListener("click", () => {
+        this.selectedDate = dateStr;
+        this.renderCalendar();
+        this.showFilesForDate(dateStr).catch((err) => console.error("Calendar date error:", err));
+      });
+
+      grid.appendChild(cell);
+    }
+
+    this.calendarContainer.appendChild(grid);
+  }
+
+  private async showFilesForDate(dateStr: string): Promise<void> {
+    this.listPanelActive = "calendar";
+    this.updateListButtons();
+
+    const files = await listMdFilesForDate(this.NORDA_PATH, dateStr);
+
+    this.treeContainer.innerHTML = "";
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "file-list-header";
+    header.innerHTML = `<span class="file-list-title">Notes: ${dateStr}</span><span class="file-list-close" title="Back to tree">&times;</span>`;
+    header.querySelector(".file-list-close")!.addEventListener("click", () => {
+      this.selectedDate = null;
+      this.renderCalendar();
+      this.clearListPanel();
+    });
+    this.treeContainer.appendChild(header);
+
+    if (files.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.style.height = "60px";
+      empty.textContent = "No notes for this date";
+      this.treeContainer.appendChild(empty);
+      return;
+    }
+
+    // Find the daily note (if any) and separate from others
+    const dailyNote = files.find((f: DateFileEntry) => f.is_daily_note);
+    const otherFiles = files.filter((f: DateFileEntry) => !f.is_daily_note);
+
+    if (dailyNote) {
+      const row = this.createDateFileRow(dailyNote);
+      this.treeContainer.appendChild(row);
+
+      if (otherFiles.length > 0) {
+        const separator = document.createElement("div");
+        separator.className = "calendar-file-separator";
+        this.treeContainer.appendChild(separator);
+      }
+    }
+
+    for (const file of otherFiles) {
+      const row = this.createDateFileRow(file);
+      this.treeContainer.appendChild(row);
+    }
+  }
+
+  private createDateFileRow(file: DateFileEntry): HTMLElement {
+    const row = document.createElement("div");
+    row.className = "tree-row tree-row-file";
+    if (file.is_daily_note) row.classList.add("calendar-daily-note");
+    row.style.paddingLeft = "8px";
+    row.dataset.path = file.path;
+    row.innerHTML = `<span class="tree-arrow">&nbsp;</span><span class="tree-label" title="${file.relative}">${file.relative}</span>`;
+    row.addEventListener("click", () => {
+      this.setFocusedRow(row);
+      this.onFileSelect?.(file.path);
+    });
+    row.addEventListener("dblclick", () => {
+      if (this.onFileDoubleClick) {
+        this.onFileDoubleClick(file.path);
+      }
+    });
+    return row;
   }
 }

@@ -350,6 +350,93 @@ pub fn list_md_files_by_created(dir: String) -> Result<Vec<FileWithTime>, String
     Ok(files)
 }
 
+#[derive(Serialize)]
+pub struct DateFileEntry {
+    pub name: String,
+    pub path: String,
+    pub relative: String,
+    pub is_daily_note: bool,
+    pub created_ms: u64,
+}
+
+/// List all .md files created on a specific date (YYYY-MM-DD format).
+/// Daily notes matching YYYY.MM.DD.md in 0.Daily Notes are flagged.
+#[tauri::command]
+pub fn list_md_files_for_date(dir: String, date: String) -> Result<Vec<DateFileEntry>, String> {
+    use chrono::{NaiveDate, TimeZone};
+
+    let target_date = NaiveDate::parse_from_str(&date, "%Y-%m-%d")
+        .map_err(|e| format!("Invalid date '{}': {}", date, e))?;
+
+    // Convert date parts for daily note matching (YYYY.MM.DD.md)
+    let daily_note_name = date.replace('-', ".") + ".md";
+
+    let base = std::path::Path::new(&dir);
+    let mut files: Vec<DateFileEntry> = Vec::new();
+
+    let local_tz = chrono::Local;
+    let day_start = local_tz.from_local_datetime(&target_date.and_hms_opt(0, 0, 0).unwrap())
+        .earliest()
+        .ok_or_else(|| "Failed to compute day start".to_string())?;
+    let next_date = target_date.succ_opt().ok_or_else(|| "Date overflow".to_string())?;
+    let day_end = local_tz.from_local_datetime(&next_date.and_hms_opt(0, 0, 0).unwrap())
+        .earliest()
+        .ok_or_else(|| "Failed to compute day end".to_string())?;
+
+    let start_ms = day_start.timestamp_millis() as u64;
+    let end_ms = day_end.timestamp_millis() as u64;
+
+    for entry in WalkDir::new(&dir).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
+        if !name.ends_with(".md") {
+            continue;
+        }
+        if path.components().any(|c| {
+            c.as_os_str().to_str().map_or(false, |s| s.starts_with('.'))
+        }) {
+            continue;
+        }
+
+        let created_ms = path.metadata()
+            .and_then(|m| m.created())
+            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as u64)
+            .unwrap_or(0);
+
+        if created_ms < start_ms || created_ms >= end_ms {
+            continue;
+        }
+
+        let relative = path.strip_prefix(base)
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| name.clone());
+
+        let is_daily_note = name == daily_note_name;
+
+        files.push(DateFileEntry {
+            name,
+            path: path.to_string_lossy().to_string(),
+            relative,
+            is_daily_note,
+            created_ms,
+        });
+    }
+
+    // Sort: daily note first, then by name
+    files.sort_by(|a, b| {
+        b.is_daily_note.cmp(&a.is_daily_note)
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
+
+    Ok(files)
+}
+
 #[tauri::command]
 pub fn search_md_files(dir: String, query: String) -> Result<Vec<SearchResult>, String> {
     let base = std::path::Path::new(&dir);
